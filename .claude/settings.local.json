@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude mcp add:*)",
+      "Bash(claude plugin add:*)",
+      "Bash(npx:*)",
+      "Bash(where npx:*)",
+      "Bash(node --version:*)",
+      "Bash(npm:*)",
+      "Skill(playwright-cli)"
+    ]
+  }
+}
