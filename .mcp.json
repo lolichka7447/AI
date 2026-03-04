@@ -8,7 +8,7 @@
       "command": "cmd",
       "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-gitlab"],
       "env": {
-        "GITLAB_PERSONAL_ACCESS_TOKEN": "glpat-qiLo_w1psTrE2-ijbyav
+        "GITLAB_PERSONAL_ACCESS_TOKEN": "${GITLAB_PERSONAL_ACCESS_TOKEN}"
       }
     },
     "figma-remote-mcp": {
