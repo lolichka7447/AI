@@ -20,6 +20,7 @@
     "@playwright/test": "^1.57.0",
     "@types/node": "^25.0.9",
     "dotenv": "^17.2.3",
+    "pg": "^8.19.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
