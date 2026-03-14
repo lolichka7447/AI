@@ -7,7 +7,30 @@
       "Bash(where npx:*)",
       "Bash(node --version:*)",
       "Bash(npm:*)",
-      "Skill(playwright-cli)"
+      "Skill(playwright-cli)",
+      "Bash(del \"C:\\\\Users\\\\Пользователь\\\\AI\\\\codex-generator.ts\")",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: remove leaked token, restructure project, add error handling\n\n- Remove hardcoded GitLab token from .mcp.json, use env var reference\n- Fix invalid JSON in .mcp.json\n- Update .gitignore to exclude .env, .mcp.json, dist/, .playwright-cli/\n- Activate dotenv and baseURL in playwright.config.ts\n- Move codex-generator.ts to src/ with proper error handling\n- Update codex-generator to use current OpenAI SDK \\(chat.completions.create\\)\n- Create POM structure: tests/pages/base.page.ts, tests/fixtures/test-data.ts\n- Add test directory scaffolding: tests/e2e/, tests/api/\n- Create src/ directories matching tsconfig path aliases\n- Add npm scripts for test, test:headed, test:ui, per-browser runs, report\n- Add .env.example with all required environment variables\n- Configure GitHub Actions workflow with secrets for CI env vars\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(node -e:*)",
+      "Bash(node:*)",
+      "Bash(dir:*)",
+      "Bash(du:*)",
+      "Bash(find \"C:\\\\Users\\\\Пользователь\\\\AI\\\\_target-project\\\\autotests\"\" -type f -name \"*.py \")",
+      "WebFetch(domain:www.figma.com)",
+      "Bash(findstr:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(done)",
+      "Bash(for file in \"C:\\\\Users\\\\Пользователь\\\\AI\\\\tests\\\\e2e\\\\*.ts\")",
+      "Bash(do:*)",
+      "Bash(for file in \"C:\\\\Users\\\\Пользователь\\\\AI\\\\tests\\\\pages\\\\*.ts\")",
+      "Bash(for file in \"C:\\\\Users\\\\Пользователь\\\\AI\\\\tests\\\\fixtures\\\\*.ts\")",
+      "Bash(git status:*)"
     ]
   }
 }
