@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
+import { t } from '../i18n';
 
 /**
  * Page Object for /vacation/my — Мои отпуска и выходные
@@ -43,30 +44,30 @@ export class MyVacationsPage extends BasePage {
 
     this.vacationList = page.locator('[class*="vacation-list"], [class*="absence-list"], table, main').first();
     this.vacationItems = this.vacationList.locator('tr, [class*="vacation-item"], [class*="absence-item"]');
-    this.emptyState = page.locator('[class*="empty"], text=/нет отпусков/i, text=/нет данных/i').first();
+    this.emptyState = page.locator(`[class*="empty"], text=/${t('msg.noVacations')}/i, text=/${t('msg.noData')}/i`).first();
 
-    this.createVacationButton = page.getByRole('button', { name: /Создать|Добавить|Запланировать/i }).first();
-    this.vacationModal = page.locator('[class*="modal"], [role="dialog"]').first();
-    this.vacationTypeSelect = this.vacationModal.locator('select, [class*="type-select"], [class*="radio-group"]').first();
-    this.dateStartInput = this.vacationModal.locator('input[class*="start"], input[placeholder*="с" i], input[placeholder*="начало" i], input[type="date"]').first();
-    this.dateEndInput = this.vacationModal.locator('input[class*="end"], input[placeholder*="по" i], input[placeholder*="конец" i], input[type="date"]').last();
-    this.commentInput = this.vacationModal.locator('textarea, input[placeholder*="коммент" i]').first();
+    this.createVacationButton = page.getByRole('button', { name: new RegExp(t('btn.create'), 'i') }).first();
+    this.vacationModal = page.locator('.modal__wrapper, .modal, [role="dialog"]').first();
+    this.vacationTypeSelect = this.vacationModal.locator('label.uikit-checkbox, [class*="uikit-checkbox"], select, [class*="type-select"]').first();
+    this.dateStartInput = this.vacationModal.locator('input.date-picker__input').first();
+    this.dateEndInput = this.vacationModal.locator('input.date-picker__input').nth(1);
+    this.commentInput = this.vacationModal.locator(`textarea, input[placeholder*="${t('placeholder.comment')}" i]`).first();
     this.fileUploadInput = this.vacationModal.locator('input[type="file"]').first();
-    this.submitButton = this.vacationModal.locator('button:has-text("Сохранить"), button:has-text("Создать"), button[type="submit"]').first();
-    this.cancelButton = this.vacationModal.locator('button:has-text("Отмена"), button:has-text("Закрыть")').first();
+    this.submitButton = this.vacationModal.locator(`button:has-text("${t('btn.send')}"), button:has-text("${t('btn.save')}"), button:has-text("${t('btn.create')}"), button[type="submit"]`).first();
+    this.cancelButton = this.vacationModal.locator(`button:has-text("${t('btn.cancel')}"), button:has-text("${t('btn.close')}")`).first();
 
-    this.transferDayOffButton = page.getByRole('button', { name: /Перенос|Transfer/i }).first();
-    this.transferModal = page.locator('[class*="modal"]:has-text("Перенос"), [role="dialog"]:has-text("Перенос")');
+    this.transferDayOffButton = page.getByRole('button', { name: new RegExp(t('btn.transferDay'), 'i') }).first();
+    this.transferModal = page.locator(`.modal:has-text("${t('btn.transferDay')}"), [role="dialog"]:has-text("${t('btn.transferDay')}")`);
     this.transferFromDate = this.transferModal.locator('input').first();
     this.transferToDate = this.transferModal.locator('input').last();
-    this.transferSubmitButton = this.transferModal.locator('button:has-text("Сохранить"), button:has-text("Перенести")').first();
+    this.transferSubmitButton = this.transferModal.locator(`button:has-text("${t('btn.save')}"), button:has-text("${t('btn.transferDayAlt')}")`).first();
 
     this.detailPanel = page.locator('[class*="detail"], [class*="sidebar"], [class*="drawer"]').first();
     this.statusBadge = page.locator('[class*="status"], [class*="badge"]').first();
-    this.deleteButton = page.getByRole('button', { name: /Удалить|Delete/i }).first();
-    this.editButton = page.getByRole('button', { name: /Редактировать|Edit/i }).first();
+    this.deleteButton = page.getByRole('button', { name: new RegExp(t('btn.delete'), 'i') }).first();
+    this.editButton = page.getByRole('button', { name: new RegExp(t('btn.edit'), 'i') }).first();
 
-    this.alertContainer = page.locator('[class*="alert"], [class*="toast"], [role="alert"]').first();
+    this.alertContainer = page.locator('.popup.popup_show, [role="alert"], .rc-notification').first();
     this.errorMessage = this.vacationModal.locator('[class*="error"], [class*="validation"]').first();
   }
 
@@ -134,7 +135,7 @@ export class AvailabilityChartPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.chartGrid = page.locator('[class*="chart"], [class*="availability"], table').first();
+    this.chartGrid = page.locator('[class*="chart"], [class*="availability"], table:visible').first();
     this.monthHeaders = this.chartGrid.locator('[class*="month-header"], th[colspan]');
     this.dayHeaders = this.chartGrid.locator('[class*="day-header"], th:not([colspan])');
     this.employeeRows = this.chartGrid.locator('tr[class*="employee"], tbody tr');
@@ -144,15 +145,15 @@ export class AvailabilityChartPage extends BasePage {
     this.nextPeriodButton = page.locator('button:has(svg), button[class*="next"]').last();
     this.periodLabel = page.locator('[class*="period-label"], h2, h3').first();
 
-    this.departmentFilter = page.locator('[class*="department-filter"], select:has-text("Отдел")').first();
-    this.employeeFilter = page.locator('[class*="employee-filter"], input[placeholder*="сотрудник" i]').first();
+    this.departmentFilter = page.locator(`[class*="department-filter"], select:has-text("${t('filter.department')}")`).first();
+    this.employeeFilter = page.locator(`[class*="employee-filter"], input[placeholder*="${t('placeholder.employee')}" i]`).first();
 
     this.legend = page.locator('[class*="legend"]').first();
     this.legendItems = this.legend.locator('[class*="legend-item"], li, span');
 
     this.tooltip = page.locator('[class*="tooltip"], [role="tooltip"]').first();
 
-    this.copyButton = page.getByRole('button', { name: /Копировать|Copy/i }).first();
+    this.copyButton = page.getByRole('button', { name: new RegExp(t('btn.copy'), 'i') }).first();
   }
 
   get url() { return '/vacation/chart'; }
@@ -208,14 +209,14 @@ export class VacationRequestsPage extends BasePage {
 
     this.requestList = page.locator('[class*="request-list"], table, main').first();
     this.requestItems = this.requestList.locator('tr, [class*="request-item"]');
-    this.emptyState = page.locator('[class*="empty"], text=/нет заявок/i').first();
+    this.emptyState = page.locator(`[class*="empty"], text=/${t('msg.noRequests')}/i`).first();
 
-    this.approveButton = page.getByRole('button', { name: /Подтвердить|Approve/i }).first();
-    this.rejectButton = page.getByRole('button', { name: /Отклонить|Reject/i }).first();
+    this.approveButton = page.getByRole('button', { name: new RegExp(t('btn.approve'), 'i') }).first();
+    this.rejectButton = page.getByRole('button', { name: new RegExp(t('btn.reject'), 'i') }).first();
     this.approvalBar = page.locator('[class*="approval-bar"], [class*="action-bar"]').first();
 
     this.statusFilter = page.locator('[class*="status-filter"], select').first();
-    this.departmentFilter = page.locator('[class*="department-filter"], select:has-text("Отдел")').first();
+    this.departmentFilter = page.locator(`[class*="department-filter"], select:has-text("${t('filter.department')}")`).first();
   }
 
   get url() { return '/vacation/request'; }
@@ -238,10 +239,10 @@ export class VacationDaysPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.dataTable = page.locator('table').first();
+    this.dataTable = page.locator('table:visible').first();
     this.dataRows = this.dataTable.locator('tbody tr');
-    this.searchInput = page.locator('input[placeholder*="Поиск" i], input[class*="search"]').first();
-    this.departmentFilter = page.locator('[class*="department-filter"], select:has-text("Отдел")').first();
+    this.searchInput = page.locator(`input[placeholder*="${t('placeholder.search')}" i], input[class*="search"]`).first();
+    this.departmentFilter = page.locator(`[class*="department-filter"], select:has-text("${t('filter.department')}")`).first();
     this.tooltip = page.locator('[class*="tooltip"], [role="tooltip"]').first();
   }
 
@@ -264,7 +265,7 @@ export class VacationPaymentPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.dataTable = page.locator('table').first();
+    this.dataTable = page.locator('table:visible').first();
     this.dataRows = this.dataTable.locator('tbody tr');
     this.periodFilter = page.locator('[class*="period"], [class*="date-range"], select').first();
     this.emptyState = page.locator('[class*="empty"], text=/нет данных/i').first();
@@ -295,9 +296,9 @@ export class VacationDaysCorrectionPage extends BasePage {
     this.form = page.locator('form, [class*="correction-form"]').first();
     this.employeeSelect = page.locator('select[class*="employee"], [class*="employee-select"]').first();
     this.daysInput = page.locator('input[type="number"], input[class*="days"]').first();
-    this.reasonInput = page.locator('textarea, input[placeholder*="причина" i]').first();
-    this.submitButton = page.getByRole('button', { name: /Сохранить|Применить|Save/i }).first();
-    this.dataTable = page.locator('table').first();
+    this.reasonInput = page.locator(`textarea, input[placeholder*="${t('placeholder.reason')}" i]`).first();
+    this.submitButton = page.getByRole('button', { name: new RegExp(t('btn.save'), 'i') }).first();
+    this.dataTable = page.locator('table:visible').first();
     this.dataRows = this.dataTable.locator('tbody tr');
   }
 
@@ -322,12 +323,12 @@ export class EmployeeSickLeavesPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.dataTable = page.locator('table').first();
+    this.dataTable = page.locator('table:visible').first();
     this.dataRows = this.dataTable.locator('tbody tr');
-    this.searchInput = page.locator('input[placeholder*="Поиск" i], input[class*="search"]').first();
-    this.departmentFilter = page.locator('[class*="department-filter"], select:has-text("Отдел")').first();
-    this.statusFilter = page.locator('[class*="status-filter"], select:has-text("Статус")').first();
-    this.emptyState = page.locator('[class*="empty"], text=/нет данных/i').first();
+    this.searchInput = page.locator(`input[placeholder*="${t('placeholder.search')}" i], input[class*="search"]`).first();
+    this.departmentFilter = page.locator(`[class*="department-filter"], select:has-text("${t('filter.department')}")`).first();
+    this.statusFilter = page.locator(`[class*="status-filter"], select:has-text("${t('filter.status')}")`).first();
+    this.emptyState = page.locator(`[class*="empty"], text=/${t('msg.noData')}/i`).first();
   }
 
   get url() { return '/vacation/sick-leaves-of-employees'; }

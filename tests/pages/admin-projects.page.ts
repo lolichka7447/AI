@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { AdminPage } from './admin.page';
+import { t } from '../i18n';
 
 /**
  * Extended AdminPage with detailed project management features
@@ -45,61 +46,61 @@ export class AdminProjectsPage extends AdminPage {
   constructor(page: Page) {
     super(page);
 
-    // Tabs
-    this.allProjectsTab = page.locator('a:has-text("Все"), button:has-text("Все"), [class*="tab"]:has-text("Все")').first();
-    this.myProjectsTab = page.locator('a:has-text("Мои"), button:has-text("Мои"), [class*="tab"]:has-text("Мои")').first();
+    // Tabs — main-tabs__item inside main-tabs__theme-main
+    this.allProjectsTab = page.locator('.main-tabs__theme-main .main-tabs__item').filter({ hasText: new RegExp(`^${t('tab.all')}$`, 'i') }).first();
+    this.myProjectsTab = page.locator('.main-tabs__theme-main .main-tabs__item').filter({ hasText: new RegExp(t('tab.my'), 'i') }).first();
 
-    // Details
-    this.detailPanel = page.locator('[class*="detail-panel"], [class*="project-detail"], [class*="sidebar"], [class*="drawer"]').first();
-    this.detailProjectName = this.detailPanel.locator('[class*="name"], h2, h3').first();
-    this.detailProjectDescription = this.detailPanel.locator('[class*="description"], p').first();
+    // Details — info-project-modal or side panel
+    this.detailPanel = page.locator('.info-project-modal, .modal, [role="dialog"], [class*="detail-panel"]').first();
+    this.detailProjectName = this.detailPanel.locator('.modal__title, h2, h3').first();
+    this.detailProjectDescription = this.detailPanel.locator('p, [class*="description"]').first();
     this.detailProjectStatus = this.detailPanel.locator('[class*="status"], [class*="badge"]').first();
-    this.detailTrackerInfo = this.detailPanel.locator('[class*="tracker"], [class*="integration"]').first();
-    this.detailMembersList = this.detailPanel.locator('[class*="members-list"], [class*="participants"], ul, table').first();
-    this.detailCloseButton = this.detailPanel.locator('button:has-text("Закрыть"), button[class*="close"]').first();
+    this.detailTrackerInfo = this.detailPanel.locator('[class*="tracker"]').first();
+    this.detailMembersList = this.detailPanel.locator('ul, table').first();
+    this.detailCloseButton = this.detailPanel.locator(`.modal__close, button:has-text("${t('btn.close')}")`).first();
 
     // Form extended
-    this.projectCodeInput = page.locator('[class*="modal"] input[name*="code"], [class*="modal"] input[placeholder*="код" i]').first();
-    this.projectManagerSelect = page.locator('[class*="modal"] [class*="manager-select"], [class*="modal"] select[name*="manager"]').first();
-    this.projectDepartmentSelect = page.locator('[class*="modal"] [class*="department-select"], [class*="modal"] select[name*="department"]').first();
-    this.projectBillableCheckbox = page.locator('[class*="modal"] input[type="checkbox"][name*="billable"], [class*="modal"] [class*="billable"]').first();
-    this.projectStartDate = page.locator('[class*="modal"] input[name*="start"], [class*="modal"] input[class*="start-date"]').first();
-    this.projectEndDate = page.locator('[class*="modal"] input[name*="end"], [class*="modal"] input[class*="end-date"]').first();
+    this.projectCodeInput = page.locator('.modal input[name*="code"], .modal input[placeholder*="код" i]').first();
+    this.projectManagerSelect = page.locator('.modal select[name*="manager"], .modal select').nth(1);
+    this.projectDepartmentSelect = page.locator('.modal select[name*="department"]').first();
+    this.projectBillableCheckbox = page.locator('.modal input[type="checkbox"]').first();
+    this.projectStartDate = page.locator('.modal input[type="date"]').first();
+    this.projectEndDate = page.locator('.modal input[type="date"]').last();
 
     // Transfer
-    this.transferProjectButton = page.getByRole('button', { name: /Передать|Transfer/i }).first();
-    this.returnProjectButton = page.getByRole('button', { name: /Вернуть|Return/i }).first();
-    this.transferTargetSelect = page.locator('[class*="modal"] select, [class*="modal"] [class*="target-select"]').first();
-    this.transferConfirmButton = page.locator('[class*="modal"] button:has-text("Передать"), [class*="modal"] button:has-text("Подтвердить")').first();
+    this.transferProjectButton = page.getByRole('button', { name: new RegExp(t('btn.transfer'), 'i') }).first();
+    this.returnProjectButton = page.getByRole('button', { name: new RegExp(t('btn.return'), 'i') }).first();
+    this.transferTargetSelect = page.locator('.modal select').first();
+    this.transferConfirmButton = page.locator(`.modal button:has-text("${t('btn.transfer')}"), .modal button:has-text("${t('btn.confirm')}")`).first();
 
-    // Pagination
-    this.paginationContainer = page.locator('[class*="pagination"], nav[aria-label*="pagination"]').first();
+    // Pagination — uses Pagination component
+    this.paginationContainer = page.locator('.pagination, nav[aria-label*="pagination"]').first();
     this.nextPageButton = this.paginationContainer.locator('button:has-text("»"), button:has-text("Next"), [aria-label="Next"]').first();
     this.prevPageButton = this.paginationContainer.locator('button:has-text("«"), button:has-text("Prev"), [aria-label="Previous"]').first();
 
     // Sort
-    this.sortByNameButton = page.locator('th:has-text("Название"), th:has-text("Name"), button:has-text("Название")').first();
-    this.sortByStatusButton = page.locator('th:has-text("Статус"), th:has-text("Status"), button:has-text("Статус")').first();
-    this.sortByDateButton = page.locator('th:has-text("Дата"), th:has-text("Date"), button:has-text("Дата")').first();
+    this.sortByNameButton = page.locator(`th:has-text("${t('label.name')}")`).first();
+    this.sortByStatusButton = page.locator(`th:has-text("${t('label.status')}")`).first();
+    this.sortByDateButton = page.locator(`th:has-text("${t('label.date')}")`).first();
   }
 
   // --- Tab navigation ---
 
   async switchToAllProjects() {
     await this.allProjectsTab.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async switchToMyProjects() {
     await this.myProjectsTab.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Detail panel ---
 
   async openProjectDetails(projectName: string) {
     const row = this.getProjectRow(projectName);
-    const detailBtn = row.locator('button:has-text("Подробнее"), a:has-text("Подробнее"), [title*="Подробнее"]').first();
+    const detailBtn = row.locator(`button:has-text("${t('btn.details')}"), a:has-text("${t('btn.details')}"), [title*="${t('btn.details')}"]`).first();
     if (await detailBtn.isVisible().catch(() => false)) {
       await detailBtn.click();
     } else {
@@ -109,7 +110,7 @@ export class AdminProjectsPage extends AdminPage {
   }
 
   async getDetailMemberNames(): Promise<string[]> {
-    const items = this.detailMembersList.locator('li, tr, [class*="member"]');
+    const items = this.detailMembersList.locator('li, tr');
     const count = await items.count();
     const names: string[] = [];
     for (let i = 0; i < count; i++) {
@@ -132,25 +133,25 @@ export class AdminProjectsPage extends AdminPage {
     await this.page.waitForTimeout(300);
     await this.transferTargetSelect.selectOption({ label: targetUser });
     await this.transferConfirmButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async returnProject(projectName: string) {
     await this.openProjectDetails(projectName);
     await this.returnProjectButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Sort ---
 
   async sortByName() {
     await this.sortByNameButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async sortByStatus() {
     await this.sortByStatusButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Extended project creation ---
@@ -181,19 +182,19 @@ export class AdminProjectsPage extends AdminPage {
       }
     }
     await this.projectFormSubmitButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Pagination ---
 
   async goToNextPage() {
     await this.nextPageButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async goToPrevPage() {
     await this.prevPageButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async isPaginationVisible(): Promise<boolean> {

@@ -31,7 +31,7 @@ test.describe('TC-AUTH: Авторизация через CAS', () => {
 
     // Should stay on CAS login page with error
     await expect(page).toHaveURL(/cas/);
-    await expect(page.locator('.alert, .error, .errors, [class*="error"], [class*="alert"]').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.alert, .error, .errors, #msg, .login-error').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('TC-AUTH-004: Поле пароля маскировано по умолчанию', async ({ page }) => {

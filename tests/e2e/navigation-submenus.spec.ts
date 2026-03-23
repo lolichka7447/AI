@@ -16,9 +16,9 @@ test.describe('Подменю навигации', () => {
       const nav = new NavigationComponent(page);
       await nav.absenceCalendarButton.click();
       await page.waitForTimeout(300);
-      const dropdown = page.locator('[class*="dropdown"], [class*="submenu"], [role="menu"]').first();
+      const dropdown = page.locator('.navbar__list-drop, [role="menu"]').first();
       const isVisible = await dropdown.isVisible().catch(() => false);
-      expect(typeof isVisible).toBe('boolean');
+      expect(isVisible).toBe(true);
     });
 
     test('TC-SUB-002: Переход — Мои отпуска и выходные', async ({ authenticatedPage: page }) => {
@@ -67,9 +67,9 @@ test.describe('Подменю навигации', () => {
       const nav = new NavigationComponent(page);
       await nav.statisticsButton.click();
       await page.waitForTimeout(300);
-      const dropdown = page.locator('[class*="dropdown"], [class*="submenu"], [role="menu"]').first();
+      const dropdown = page.locator('.navbar__list-drop, [role="menu"]').first();
       const isVisible = await dropdown.isVisible().catch(() => false);
-      expect(typeof isVisible).toBe('boolean');
+      expect(isVisible).toBe(true);
     });
 
     test('TC-SUB-009: Переход — Общая статистика', async ({ authenticatedPage: page }) => {
@@ -94,9 +94,9 @@ test.describe('Подменю навигации', () => {
       const nav = new NavigationComponent(page);
       await nav.adminButton.click();
       await page.waitForTimeout(300);
-      const dropdown = page.locator('[class*="dropdown"], [class*="submenu"], [role="menu"]').first();
+      const dropdown = page.locator('.navbar__list-drop, [role="menu"]').first();
       const isVisible = await dropdown.isVisible().catch(() => false);
-      expect(typeof isVisible).toBe('boolean');
+      expect(isVisible).toBe(true);
     });
 
     test('TC-SUB-012: Переход — Проекты', async ({ authenticatedPage: page }) => {

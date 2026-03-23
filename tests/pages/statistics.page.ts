@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
+import { t } from '../i18n';
 
 export class StatisticsPage extends BasePage {
   // Tabs
@@ -30,35 +31,29 @@ export class StatisticsPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    // Tabs
-    this.departmentsTab = page.getByRole('tab', { name: /Отделы|Departments/i }).or(
-      page.locator('button:has-text("Отделы"), a:has-text("Отделы")').first()
-    );
-    this.employeesTab = page.getByRole('tab', { name: /Сотрудники|Employees/i }).or(
-      page.locator('button:has-text("Сотрудники"), a:has-text("Сотрудники")').first()
-    );
-    this.projectsTab = page.getByRole('tab', { name: /Проекты|Projects/i }).or(
-      page.locator('button:has-text("Проекты"), a:has-text("Проекты")').first()
-    );
-    this.tasksTab = page.getByRole('tab', { name: /Задачи|Tasks/i }).or(
-      page.locator('button:has-text("Задачи"), a:has-text("Задачи")').first()
-    );
+    // Tabs — Statistics uses rc-tabs (Ant Design), tab names: "Мои задачи", "Мои проекты", "Сотрудники моих проектов", etc.
+    this.departmentsTab = page.locator('.rc-tabs-tab').filter({ hasText: /Проекты отдела/i }).first();
+    this.employeesTab = page.locator('.rc-tabs-tab').filter({ hasText: /Сотрудники моих проектов|Сотрудники отдела/i }).first();
+    this.projectsTab = page.locator('.rc-tabs-tab').filter({ hasText: /Мои проекты/i }).first();
+    this.tasksTab = page.locator('.rc-tabs-tab').filter({ hasText: /Мои задачи/i }).first();
 
     // Filters
-    this.periodFilter = page.locator('[class*="period"], [class*="date-range"]').first();
-    this.periodStartInput = page.locator('input[class*="start"], input[placeholder*="с" i], input[placeholder*="from" i]').first();
-    this.periodEndInput = page.locator('input[class*="end"], input[placeholder*="по" i], input[placeholder*="to" i]').first();
-    this.contractorFilter = page.locator('[class*="contractor"], select:has-text("Подрядчик")').first();
-    this.departmentFilter = page.locator('[class*="department-filter"], select:has-text("Отдел")').first();
+    this.periodFilter = page.locator('.header-filter, [class*="period"], [class*="date-range"]').first();
+    this.periodStartInput = page.locator('input[type="date"], input[placeholder*="с" i], input[placeholder*="from" i]').first();
+    this.periodEndInput = page.locator('input[type="date"], input[placeholder*="по" i], input[placeholder*="to" i]').last();
+    this.contractorFilter = page.locator('select').filter({ hasText: new RegExp(t('label.contractor'), 'i') }).first()
+      .or(page.locator('[class*="contractor"]').first());
+    this.departmentFilter = page.locator('select').filter({ hasText: new RegExp(t('filter.department'), 'i') }).first()
+      .or(page.locator('[class*="department-filter"]').first());
 
     // Data table
-    this.dataTable = page.locator('table').first();
+    this.dataTable = page.locator('table:visible').first();
     this.dataRows = this.dataTable.locator('tbody tr');
-    this.totalRow = this.dataTable.locator('tr:has-text("Итого"), tr:has-text("Всего"), tfoot tr').last();
-    this.emptyState = page.locator('[class*="empty"], text=/нет данных/i, text=/No data/i').first();
+    this.totalRow = this.dataTable.locator(`tr:has-text("${t('label.totalAlt')}"), tr:has-text("${t('label.total')}"), tfoot tr`).last();
+    this.emptyState = page.locator(`[class*="empty"], text=${new RegExp(t('msg.noData'), 'i')}`).first();
 
     // Export
-    this.exportButton = page.getByRole('button', { name: /Экспорт|Export|Скачать|Download/i }).first();
+    this.exportButton = page.getByRole('button', { name: new RegExp(t('btn.export'), 'i') }).first();
 
     // Headers
     this.tableHeaders = this.dataTable.locator('th');
@@ -70,22 +65,22 @@ export class StatisticsPage extends BasePage {
 
   async switchToDepartments() {
     await this.departmentsTab.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async switchToEmployees() {
     await this.employeesTab.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async switchToProjects() {
     await this.projectsTab.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async switchToTasks() {
     await this.tasksTab.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Data helpers ---
@@ -124,13 +119,15 @@ export class StatisticsPage extends BasePage {
     await this.periodStartInput.fill(startDate);
     await this.periodEndInput.fill(endDate);
     await this.periodEndInput.press('Enter');
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async filterByContractor(contractorName: string) {
-    await this.contractorFilter.click();
-    await this.page.locator(`text="${contractorName}"`).click();
-    await this.page.waitForTimeout(500);
+    await this.contractorFilter.selectOption({ label: contractorName }).catch(async () => {
+      await this.contractorFilter.click();
+      await this.page.locator(`text="${contractorName}"`).click();
+    });
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Export ---

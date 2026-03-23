@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures/auth.fixture';
+import { t, tRegex } from '../i18n';
 import { AdminPage } from '../pages/admin.page';
 import { NavigationComponent } from '../pages/navigation.component';
 
@@ -17,8 +18,7 @@ test.describe('Администрирование — Параметры TTT', (
   test('TR-812: Страница параметров загружается', async ({ authenticatedPage: page }) => {
     const admin = new AdminPage(page);
     const settingsForm = admin.settingsForm;
-    const isVisible = await settingsForm.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(settingsForm).toBeVisible();
   });
 
   test('TR-813: Форма настроек отображается', async ({ authenticatedPage: page }) => {
@@ -36,19 +36,14 @@ test.describe('Администрирование — Параметры TTT', (
     const settingsForm = admin.settingsForm;
     if (await settingsForm.isVisible().catch(() => false)) {
       const firstInput = settingsForm.locator('input, select').first();
-      const isEnabled = await firstInput.isEnabled().catch(() => false);
-      expect(typeof isEnabled).toBe('boolean');
+      await expect(firstInput).toBeEnabled();
     }
   });
 
   test('TR-815: Кнопка сохранения настроек видна', async ({ authenticatedPage: page }) => {
     const admin = new AdminPage(page);
     const saveBtn = admin.settingsSaveButton;
-    const isVisible = await saveBtn.isVisible().catch(() => false);
-    if (isVisible) {
-      await expect(saveBtn).toBeVisible();
-    }
-    expect(typeof isVisible).toBe('boolean');
+    await expect(saveBtn).toBeVisible();
   });
 
   test('TR-816: Алерт при сохранении настроек', async ({ authenticatedPage: page }) => {
@@ -57,8 +52,7 @@ test.describe('Администрирование — Параметры TTT', (
     if (await saveBtn.isVisible().catch(() => false)) {
       await saveBtn.click();
       await page.waitForTimeout(500);
-      const alertVisible = await admin.isAlertVisible();
-      expect(typeof alertVisible).toBe('boolean');
+      await expect(page.locator('[role="alert"], .alert, .notification').first()).toBeVisible();
     }
   });
 
@@ -74,17 +68,15 @@ test.describe('Администрирование — Параметры TTT', (
 
   test('TR-818: Сброс настроек к значениям по умолчанию', async ({ authenticatedPage: page }) => {
     const admin = new AdminPage(page);
-    const resetBtn = page.locator('button:has-text("Сбросить"), button:has-text("По умолчанию"), button:has-text("Reset")').first();
-    const isVisible = await resetBtn.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    const resetBtn = page.locator(`button:has-text("${t('btn.reset')}"), button:has-text("${t('btn.default')}"), button:has-text("Reset")`).first();
+    await expect(resetBtn).toBeVisible();
   });
 
   test('TR-819: Feature toggles — секция видна', async ({ authenticatedPage: page }) => {
     const admin = new AdminPage(page);
     await admin.switchToFeatureToggles();
     const toggleList = admin.toggleList;
-    const isVisible = await toggleList.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(toggleList).toBeVisible();
   });
 
   test('TR-820: Feature toggles — переключатели доступны', async ({ authenticatedPage: page }) => {

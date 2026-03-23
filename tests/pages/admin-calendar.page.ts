@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
+import { t } from '../i18n';
 
 /**
  * Page Object for /admin/calendar — Производственные календари
@@ -71,29 +72,29 @@ export class AdminCalendarPage extends BasePage {
     this.dayCells = this.calendarGrid.locator('[class*="day-cell"], td[class*="day"], [class*="calendar-day"]');
 
     // Day type
-    this.workingDayButton = page.locator('button:has-text("Рабочий"), [class*="working-day"]').first();
-    this.holidayButton = page.locator('button:has-text("Выходной"), [class*="holiday"]').first();
-    this.shortenedDayButton = page.locator('button:has-text("Сокращённый"), [class*="shortened"]').first();
-    this.transferDayButton = page.locator('button:has-text("Перенос"), [class*="transfer"]').first();
+    this.workingDayButton = page.locator(`button:has-text("${t('calendar.working')}"), [class*="working-day"]`).first();
+    this.holidayButton = page.locator(`button:has-text("${t('calendar.holiday')}"), [class*="holiday"]`).first();
+    this.shortenedDayButton = page.locator(`button:has-text("${t('calendar.shortened')}"), [class*="shortened"]`).first();
+    this.transferDayButton = page.locator(`button:has-text("${t('calendar.transfer')}"), [class*="transfer"]`).first();
 
     // Day details
     this.dayDetailPopup = page.locator('[class*="day-popup"], [class*="modal"], [role="dialog"]').first();
-    this.dayNameInput = this.dayDetailPopup.locator('input[name*="name"], input[placeholder*="назван" i]').first();
+    this.dayNameInput = this.dayDetailPopup.locator(`input[name*="name"], input[placeholder*="${t('placeholder.name')}" i]`).first();
     this.dayTypeSelect = this.dayDetailPopup.locator('select, [class*="type-select"]').first();
     this.dayHoursInput = this.dayDetailPopup.locator('input[type="number"], input[name*="hours"]').first();
-    this.daySaveButton = this.dayDetailPopup.locator('button:has-text("Сохранить"), button:has-text("ОК")').first();
+    this.daySaveButton = this.dayDetailPopup.locator(`button:has-text("${t('btn.save')}"), button:has-text("${t('btn.ok')}")`).first();
 
     // Actions
-    this.saveCalendarButton = page.getByRole('button', { name: /Сохранить календарь|Сохранить/i }).first();
-    this.resetCalendarButton = page.getByRole('button', { name: /Сбросить|Reset/i }).first();
-    this.importCalendarButton = page.getByRole('button', { name: /Импорт|Import/i }).first();
-    this.exportCalendarButton = page.getByRole('button', { name: /Экспорт|Export/i }).first();
-    this.copyFromYearButton = page.getByRole('button', { name: /Скопировать|Copy from/i }).first();
+    this.saveCalendarButton = page.getByRole('button', { name: new RegExp(t('btn.saveCalendar'), 'i') }).first();
+    this.resetCalendarButton = page.getByRole('button', { name: new RegExp(t('btn.reset'), 'i') }).first();
+    this.importCalendarButton = page.getByRole('button', { name: new RegExp(t('btn.import'), 'i') }).first();
+    this.exportCalendarButton = page.getByRole('button', { name: new RegExp(t('btn.export'), 'i') }).first();
+    this.copyFromYearButton = page.getByRole('button', { name: new RegExp(t('btn.copyFromYear'), 'i') }).first();
 
     // Summary
-    this.workingDaysCount = page.locator('[class*="working-days"], text=/рабочих дней/i').first();
-    this.workingHoursCount = page.locator('[class*="working-hours"], text=/рабочих часов/i').first();
-    this.holidaysCount = page.locator('[class*="holidays-count"], text=/выходных/i').first();
+    this.workingDaysCount = page.locator(`[class*="working-days"], text=/${t('label.workingDays')}/i`).first();
+    this.workingHoursCount = page.locator(`[class*="working-hours"], text=/${t('label.workingHours')}/i`).first();
+    this.holidaysCount = page.locator(`[class*="holidays-count"], text=/${t('label.holidays')}/i`).first();
 
     // Alert
     this.alertContainer = page.locator('[class*="alert"], [class*="toast"], [role="alert"]').first();
@@ -102,6 +103,13 @@ export class AdminCalendarPage extends BasePage {
     this.legend = page.locator('[class*="legend"]').first();
     this.legendItems = this.legend.locator('[class*="legend-item"], li, span');
   }
+
+  // Aliases for backward compatibility with specs
+  get monthHeaders() { return this.monthBlocks; }
+  get yearSelector() { return this.yearSelect; }
+  get countrySelector() { return this.countrySelect; }
+  get saveButton() { return this.saveCalendarButton; }
+  get editButton() { return this.page.getByRole('button', { name: /edit|редакт/i }).first(); }
 
   get url() { return '/admin/calendar'; }
 

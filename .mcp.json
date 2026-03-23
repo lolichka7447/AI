@@ -11,6 +11,10 @@
         "GITLAB_PERSONAL_ACCESS_TOKEN": "${GITLAB_PERSONAL_ACCESS_TOKEN}"
       }
     },
+    "postgres": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-postgres", "postgresql://ttt:123456@10.0.4.222:5433/ttt?schema=ttt_backend"]
+    },
     "figma-remote-mcp": {
       "type": "http",
       "url": "https://mcp.figma.com/mcp"

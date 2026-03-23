@@ -11,12 +11,22 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  workers: process.env.CI ? 1 : 2,
+  reporter: [
+    ['html'],
+    ['./tests/reporters/markdown-reporter.ts'],
+    ['./tests/reporters/history-reporter.ts'],
+  ],
+  timeout: 60000,
+  expect: { timeout: 10000 },
   use: {
     baseURL: process.env.BASE_URL || 'https://ttt-qa-2.noveogroup.com',
+    navigationTimeout: 60000,
+    actionTimeout: 15000,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    // Pass LOCALE to browser context so workers inherit it
+    locale: process.env.LOCALE === 'en' ? 'en-US' : 'ru-RU',
   },
 
   projects: [
@@ -40,6 +50,18 @@ export default defineConfig({
       testDir: './tests/e2e',
       testMatch: /.*\.spec\.ts/,
       testIgnore: /auth\.spec\.ts/,
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: AUTH_STATE_PATH,
+      },
+    },
+
+    // API tests — depend on auth setup for session cookies
+    {
+      name: 'api',
+      testDir: './tests/api',
+      testMatch: /.*\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],

@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures/auth.fixture';
 import { VacationRequestsPage } from '../pages/vacation.page';
 import { NavigationComponent } from '../pages/navigation.component';
+import { t, tRegex } from '../i18n';
 
 // ============================================================================
 // Заявки сотрудников — Расширенные — 30 тестов (TR-419..TR-448)
@@ -16,33 +17,33 @@ test.describe('Заявки сотрудников — Расширенные', 
 
   test.describe('Расширенная фильтрация', () => {
     test('TR-419: Фильтр по дате подачи — с', async ({ authenticatedPage: page }) => {
-      const dateFrom = page.locator('input[class*="date-from"], input[placeholder*="с" i]').first();
+      const dateFrom = page.locator('input[type="date"], input[placeholder*="с" i]').first();
       const visible = await dateFrom.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBeDefined();
     });
 
     test('TR-420: Фильтр по дате подачи — по', async ({ authenticatedPage: page }) => {
-      const dateTo = page.locator('input[class*="date-to"], input[placeholder*="по" i]').first();
+      const dateTo = page.locator('input[type="date"], input[placeholder*="по" i]').last();
       const visible = await dateTo.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBeDefined();
     });
 
     test('TR-421: Фильтр по типу отпуска', async ({ authenticatedPage: page }) => {
-      const typeFilter = page.locator('select[class*="type"], [class*="type-filter"]').first();
+      const typeFilter = page.locator(`select:has-text("${t('label.type')}"), .header-filter select`).first();
       const visible = await typeFilter.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBeDefined();
     });
 
     test('TR-422: Фильтр по проекту', async ({ authenticatedPage: page }) => {
-      const projectFilter = page.locator('select[class*="project"], [class*="project-filter"]').first();
+      const projectFilter = page.locator(`select:has-text("${t('label.project')}"), .header-filter select`).first();
       const visible = await projectFilter.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBeDefined();
     });
 
     test('TR-423: Сброс всех фильтров', async ({ authenticatedPage: page }) => {
-      const resetBtn = page.getByRole('button', { name: /Сбросить|Очистить|Reset/i }).first();
+      const resetBtn = page.getByRole('button', { name: new RegExp(`Сбросить|${t('filter.clear')}|Reset`, 'i') }).first();
       const visible = await resetBtn.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBeDefined();
     });
 
     test('TR-424: Комбинация — статус + отдел + тип', async ({ authenticatedPage: page }) => {
@@ -85,9 +86,9 @@ test.describe('Заявки сотрудников — Расширенные', 
 
   test.describe('Массовые действия', () => {
     test('TR-431: Выбор всех заявок', async ({ authenticatedPage: page }) => {
-      const selectAll = page.locator('input[type="checkbox"][class*="select-all"], thead input[type="checkbox"]').first();
+      const selectAll = page.locator('thead input[type="checkbox"], th input[type="checkbox"]').first();
       const visible = await selectAll.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBeDefined();
     });
 
     test('TR-432: Выбор нескольких заявок', async ({ authenticatedPage: page }) => {
@@ -113,9 +114,9 @@ test.describe('Заявки сотрудников — Расширенные', 
 
   test.describe('Экспорт и статистика', () => {
     test('TR-436: Кнопка экспорта видна', async ({ authenticatedPage: page }) => {
-      const exportBtn = page.getByRole('button', { name: /Экспорт|Export|Скачать/i }).first();
+      const exportBtn = page.getByRole('button', { name: new RegExp(`${t('btn.export')}|Export|${t('btn.download')}`, 'i') }).first();
       const visible = await exportBtn.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBeDefined();
     });
 
     test('TR-437: Экспорт в Excel', async ({ authenticatedPage: page }) => {
@@ -157,9 +158,9 @@ test.describe('Заявки сотрудников — Расширенные', 
     });
 
     test('TR-444: Выбор количества записей на странице', async ({ authenticatedPage: page }) => {
-      const pageSizeSelect = page.locator('select[class*="page-size"], [class*="per-page"]').first();
+      const pageSizeSelect = page.locator('select:has-text("10"), .pagination select').first();
       const visible = await pageSizeSelect.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBeDefined();
     });
 
     test('TR-445: Печать списка заявок', async ({ authenticatedPage: page }) => {

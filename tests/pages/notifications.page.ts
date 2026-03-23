@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
+import { t } from '../i18n';
 
 export class NotificationsPage extends BasePage {
   // Notification list
@@ -28,23 +29,23 @@ export class NotificationsPage extends BasePage {
     super(page);
 
     // Notification list
-    this.notificationList = page.locator('[class*="notification-list"], [class*="notifications"], main').first();
-    this.notificationItems = this.notificationList.locator('[class*="notification-item"], [class*="notification-row"], li, tr');
-    this.emptyState = page.locator('[class*="empty"], text=/нет уведомлений/i, text=/No notifications/i').first();
+    this.notificationList = page.locator('.page-content, main, [class*="notification-list"]').first();
+    this.notificationItems = this.notificationList.locator('li, tr, [class*="notification-item"]');
+    this.emptyState = page.locator(`text=/${t('msg.noNotifications')}/i, [class*="empty"]`).first();
 
     // Notification actions
-    this.markAsReadButton = page.getByRole('button', { name: /Прочитано|Mark as read/i }).first();
-    this.deleteButton = page.getByRole('button', { name: /Удалить|Delete/i }).first();
-    this.markAllAsReadButton = page.getByRole('button', { name: /Прочитать все|Mark all/i }).first();
+    this.markAsReadButton = page.getByRole('button', { name: new RegExp(t('btn.markAsRead'), 'i') }).first();
+    this.deleteButton = page.getByRole('button', { name: new RegExp(t('btn.delete'), 'i') }).first();
+    this.markAllAsReadButton = page.getByRole('button', { name: new RegExp(t('btn.markAllAsRead'), 'i') }).first();
 
-    // Unread counter (in navigation bar)
-    this.unreadCounter = page.locator('[class*="badge"], [class*="counter"], [class*="unread-count"]').first();
+    // Unread counter (in navigation bar) — bold__navbar__link or badge
+    this.unreadCounter = page.locator('b.bold__navbar__link, [class*="badge"], [class*="counter"]').first();
 
     // Filters
     this.typeFilter = page.locator('[class*="type-filter"], select[class*="filter"]').first();
 
-    // Pagination
-    this.paginationContainer = page.locator('[class*="pagination"], nav[aria-label*="pagination"]').first();
+    // Pagination — uses Pagination component
+    this.paginationContainer = page.locator('.pagination, nav[aria-label*="pagination"]').first();
     this.nextPageButton = this.paginationContainer.locator('button:has-text("»"), button:has-text("Next"), [aria-label="Next"]').first();
     this.prevPageButton = this.paginationContainer.locator('button:has-text("«"), button:has-text("Prev"), [aria-label="Previous"]').first();
     this.pageNumbers = this.paginationContainer.locator('button, a').filter({ hasNotText: /[«»]/ });
@@ -83,7 +84,7 @@ export class NotificationsPage extends BasePage {
     const item = this.getNotification(index);
     await item.hover();
     await this.page.waitForTimeout(200);
-    const readBtn = item.locator('button:has-text("Прочитано"), button[class*="read"], [title*="прочитан"]').first();
+    const readBtn = item.locator(`button:has-text("${t('btn.markAsRead')}"), button[class*="read"], [title*="${t('tooltip.read')}"]`).first();
     await readBtn.click();
     await this.page.waitForTimeout(500);
   }
@@ -92,7 +93,7 @@ export class NotificationsPage extends BasePage {
     const item = this.getNotification(index);
     await item.hover();
     await this.page.waitForTimeout(200);
-    const deleteBtn = item.locator('button:has-text("Удалить"), button[class*="delete"], [title*="удалить"]').first();
+    const deleteBtn = item.locator(`button:has-text("${t('btn.delete')}"), button[class*="delete"], [title*="${t('tooltip.delete')}"]`).first();
     await deleteBtn.click();
     await this.page.waitForTimeout(500);
   }

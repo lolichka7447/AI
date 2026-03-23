@@ -30,7 +30,15 @@
       "Bash(do:*)",
       "Bash(for file in \"C:\\\\Users\\\\Пользователь\\\\AI\\\\tests\\\\pages\\\\*.ts\")",
       "Bash(for file in \"C:\\\\Users\\\\Пользователь\\\\AI\\\\tests\\\\fixtures\\\\*.ts\")",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Bash(git commit:*)",
+      "Bash(python -c \" import re with open\\(''test_tr_ids_tmp.txt''\\) as f: found = set\\(\\) for line in f: m = re.search\\(r''TR-\\(\\\\d+\\)'', line.strip\\(\\)\\) if m: found.add\\(int\\(m.group\\(1\\)\\)\\) expected = set\\(\\) for i in range\\(1, 1064\\): expected.add\\(i\\) expected.add\\(1132\\) expected.add\\(1133\\) missing = sorted\\(expected - found\\) extra = sorted\\(found - expected\\) print\\(f''Expected TR IDs: {len\\(expected\\)}''\\) print\\(f''Found in tests: {len\\(found\\)}''\\) print\\(f''Missing \\({len\\(missing\\)}\\):''\\) for m in missing: print\\(f'' TR-{m}''\\) if extra: print\\(f''Extra \\({len\\(extra\\)}\\):''\\) for e in extra: print\\(f'' TR-{e}''\\) \")",
+      "Bash(python -m json.tool:*)",
+      "Bash(python:*)",
+      "Bash(ping:*)",
+      "Bash(del \"C:\\\\Users\\\\Пользователь\\\\AI\\\\_check-keys.ts\")",
+      "Bash(git diff:*)",
+      "Bash(powershell -Command:*)"
     ]
   }
 }

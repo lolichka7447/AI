@@ -138,8 +138,8 @@ test.describe('Подтверждение', () => {
         const confirmBtn = approval.rejectConfirmButton;
         if (await confirmBtn.isVisible().catch(() => false)) {
           const isDisabled = await confirmBtn.isDisabled().catch(() => false);
-          // Либо кнопка недоступна, либо требуется ввод комментария
-          expect(typeof isDisabled).toBe('boolean');
+          // Кнопка отклонения по умолчанию должна быть отключена без комментария
+          expect(isDisabled).toBe(true);
           await page.keyboard.press('Escape');
         }
       }
@@ -155,8 +155,7 @@ test.describe('Подтверждение', () => {
       const hasReported = await reportedBadge.isVisible().catch(() => false);
       const hasApproved = await approvedBadge.isVisible().catch(() => false);
       // На странице должен быть хотя бы один индикатор статуса
-      expect(typeof hasReported).toBe('boolean');
-      expect(typeof hasApproved).toBe('boolean');
+      expect(hasReported || hasApproved).toBe(true);
     });
   });
 

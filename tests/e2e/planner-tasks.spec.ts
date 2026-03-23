@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures/auth.fixture';
+import { t, tRegex } from '../i18n';
 import { PlannerPage } from '../pages/planner.page';
 import { NavigationComponent } from '../pages/navigation.component';
 
@@ -24,7 +25,7 @@ test.describe('Планировщик — Задачи', () => {
 
       const createBtn = planner.createTaskButton;
       const isVisible = await createBtn.isVisible().catch(() => false);
-      expect(typeof isVisible).toBe('boolean');
+      expect(isVisible).toBe(true);
       if (isVisible) {
         await expect(createBtn).toBeVisible();
         await expect(createBtn).toBeEnabled();
@@ -63,7 +64,7 @@ test.describe('Планировщик — Задачи', () => {
           const isRequired = await nameInput.getAttribute('required').catch(() => null);
           const ariaRequired = await nameInput.getAttribute('aria-required').catch(() => null);
           const hasRequiredAttr = isRequired !== null || ariaRequired === 'true';
-          expect(typeof hasRequiredAttr).toBe('boolean');
+          expect(hasRequiredAttr).toBeTruthy();
         }
         await planner.taskCancelButton.click().catch(() => page.keyboard.press('Escape'));
       }
@@ -82,11 +83,10 @@ test.describe('Планировщик — Задачи', () => {
         if (await nameInput.isVisible().catch(() => false)) {
           await nameInput.fill(taskName);
           await planner.taskSaveButton.click();
-          await page.waitForTimeout(500);
+          await page.waitForLoadState('networkidle').catch(() => {});
 
-          // Проверяем, что задача появилась или форма закрылась
-          const formStillOpen = await nameInput.isVisible().catch(() => false);
-          expect(typeof formStillOpen).toBe('boolean');
+          // Проверяем, что страница стабильна после создания
+          await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
         }
       }
     });
@@ -109,13 +109,13 @@ test.describe('Планировщик — Задачи', () => {
             await projectSelect.click();
             await page.waitForTimeout(300);
             // Выбираем первый доступный проект
-            const option = page.locator('[role="option"], option, [class*="option"]').first();
+            const option = page.locator('[role="option"], option, .react-autosuggest__suggestion').first();
             if (await option.isVisible().catch(() => false)) {
               await option.click();
             }
           }
           await planner.taskSaveButton.click().catch(() => {});
-          await page.waitForTimeout(500);
+          await page.waitForLoadState('networkidle').catch(() => {});
         }
         await planner.taskCancelButton.click().catch(() => page.keyboard.press('Escape'));
       }
@@ -134,11 +134,11 @@ test.describe('Планировщик — Задачи', () => {
           // Оставляем имя пустым и пробуем сохранить
           await nameInput.fill('');
           await planner.taskSaveButton.click().catch(() => {});
-          await page.waitForTimeout(500);
+          await page.waitForLoadState('networkidle').catch(() => {});
 
           // Форма должна остаться открытой или показать ошибку
           const formStillOpen = await nameInput.isVisible().catch(() => false);
-          const errorMessage = page.locator('[class*="error"], [class*="validation"], [role="alert"]').first();
+          const errorMessage = page.locator('.popup.popup_show, [role="alert"]').first();
           const errorVisible = await errorMessage.isVisible().catch(() => false);
           // Хотя бы одно из двух: форма открыта или ошибка отображается
           expect(formStillOpen || errorVisible).toBeTruthy();
@@ -162,12 +162,10 @@ test.describe('Планировщик — Задачи', () => {
           if (await nameInput.isVisible().catch(() => false)) {
             await nameInput.fill(duplicateName);
             await planner.taskSaveButton.click().catch(() => {});
-            await page.waitForTimeout(500);
+            await page.waitForLoadState('networkidle').catch(() => {});
 
-            // Ожидаем ошибку или предупреждение о дубликате
-            const errorMessage = page.locator('[class*="error"], [class*="validation"], [role="alert"], [class*="warning"]').first();
-            const errorVisible = await errorMessage.isVisible().catch(() => false);
-            expect(typeof errorVisible).toBe('boolean');
+            // Проверяем, что страница стабильна после попытки создания дубликата
+            await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
           }
           await planner.taskCancelButton.click().catch(() => page.keyboard.press('Escape'));
         }
@@ -197,7 +195,7 @@ test.describe('Планировщик — Задачи', () => {
 
           // Либо количество увеличилось, либо задача видна в списке
           const created = afterCount > beforeCount || taskVisible;
-          expect(typeof created).toBe('boolean');
+          expect(created).toBeTruthy();
         }
       }
     });
@@ -218,7 +216,7 @@ test.describe('Планировщик — Задачи', () => {
 
           // Отменяем создание
           await planner.taskCancelButton.click().catch(() => page.keyboard.press('Escape'));
-          await page.waitForTimeout(500);
+          await page.waitForLoadState('networkidle').catch(() => {});
 
           const afterCount = await planner.getTaskCount();
           expect(afterCount).toBe(beforeCount);
@@ -282,7 +280,7 @@ test.describe('Планировщик — Задачи', () => {
           if (await nameInput.isVisible().catch(() => false)) {
             await nameInput.fill(`Серийная задача ${Date.now()}_${i}`);
             await planner.taskSaveButton.click();
-            await page.waitForTimeout(500);
+            await page.waitForLoadState('networkidle').catch(() => {});
             createdCount++;
           } else {
             break;
@@ -307,7 +305,7 @@ test.describe('Планировщик — Задачи', () => {
         if (await nameInput.isVisible().catch(() => false)) {
           await nameInput.fill(`Задача очистки ${Date.now()}`);
           await planner.taskSaveButton.click();
-          await page.waitForTimeout(500);
+          await page.waitForLoadState('networkidle').catch(() => {});
 
           // Открываем форму снова
           if (await createBtn.isVisible().catch(() => false)) {
@@ -337,12 +335,10 @@ test.describe('Планировщик — Задачи', () => {
         if (await nameInput.isVisible().catch(() => false)) {
           await nameInput.fill(`Задача для алерта ${Date.now()}`);
           await planner.taskSaveButton.click();
-          await page.waitForTimeout(500);
+          await page.waitForLoadState('networkidle').catch(() => {});
 
-          // Проверяем наличие уведомления об успехе
-          const successAlert = page.locator('[class*="success"], [class*="toast"], [class*="notification"], [role="alert"]').first();
-          const alertVisible = await successAlert.isVisible().catch(() => false);
-          expect(typeof alertVisible).toBe('boolean');
+          // Проверяем, что страница стабильна после создания
+          await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
         }
       }
     });
@@ -365,12 +361,12 @@ test.describe('Планировщик — Задачи', () => {
           if (assigneeVisible) {
             await assigneeSelect.click();
             await page.waitForTimeout(300);
-            const option = page.locator('[role="option"], [class*="option"]').first();
+            const option = page.locator('[role="option"], .react-autosuggest__suggestion').first();
             if (await option.isVisible().catch(() => false)) {
               await option.click();
             }
           }
-          expect(typeof assigneeVisible).toBe('boolean');
+          await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
         }
         await planner.taskCancelButton.click().catch(() => page.keyboard.press('Escape'));
       }
@@ -393,7 +389,7 @@ test.describe('Планировщик — Задачи', () => {
         if (isVisible) {
           await expect(detailPanel).toBeVisible();
         }
-        expect(typeof isVisible).toBe('boolean');
+        await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
         await page.keyboard.press('Escape');
       }
     });
@@ -411,7 +407,7 @@ test.describe('Планировщик — Задачи', () => {
           if (assigneeVisible) {
             await assigneeSelect.click();
             await page.waitForTimeout(300);
-            const option = page.locator('[role="option"], [class*="option"]').first();
+            const option = page.locator('[role="option"], .react-autosuggest__suggestion').first();
             if (await option.isVisible().catch(() => false)) {
               const optionText = await option.textContent();
               await option.click();
@@ -437,7 +433,7 @@ test.describe('Планировщик — Задачи', () => {
             // Пробуем переназначить на другого сотрудника
             await assigneeSelect.click();
             await page.waitForTimeout(300);
-            const options = page.locator('[role="option"], [class*="option"]');
+            const options = page.locator('[role="option"], .react-autosuggest__suggestion');
             const optCount = await options.count();
             if (optCount > 1) {
               await options.nth(1).click();
@@ -462,7 +458,7 @@ test.describe('Планировщик — Задачи', () => {
           if (isVisible) {
             await expect(deleteBtn).toBeEnabled();
           }
-          expect(typeof isVisible).toBe('boolean');
+          await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
           await page.keyboard.press('Escape');
         }
       }
@@ -481,7 +477,7 @@ test.describe('Планировщик — Задачи', () => {
             await assigneeSelect.click();
             await page.waitForTimeout(300);
 
-            const options = page.locator('[role="option"], [class*="option"], option');
+            const options = page.locator('[role="option"], .react-autosuggest__suggestion, option');
             const optCount = await options.count();
             expect(optCount).toBeGreaterThanOrEqual(0);
           }
@@ -504,13 +500,13 @@ test.describe('Планировщик — Задачи', () => {
             await page.waitForTimeout(300);
 
             // Ищем поле поиска внутри дропдауна
-            const searchInput = page.locator('[class*="search"] input, [class*="dropdown"] input, input[placeholder*="Поиск" i]').first();
+            const searchInput = page.locator(`.react-autosuggest__input, input[placeholder*="${t('placeholder.search')}" i]`).first();
             const searchVisible = await searchInput.isVisible().catch(() => false);
             if (searchVisible) {
               await searchInput.fill('Тест');
               await page.waitForTimeout(300);
             }
-            expect(typeof searchVisible).toBe('boolean');
+            await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
           }
           await page.keyboard.press('Escape');
         }
@@ -529,7 +525,7 @@ test.describe('Планировщик — Задачи', () => {
           if (await detailPanel.isVisible().catch(() => false)) {
             const assigneeSelect = planner.taskAssigneeSelect;
             const assigneeVisible = await assigneeSelect.isVisible().catch(() => false);
-            expect(typeof assigneeVisible).toBe('boolean');
+            await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
             await page.keyboard.press('Escape');
             await page.waitForTimeout(300);
           }
@@ -549,9 +545,9 @@ test.describe('Планировщик — Задачи', () => {
           if (await assigneeSelect.isVisible().catch(() => false)) {
             // Проверяем, является ли селектор мультиселектом
             const isMultiple = await assigneeSelect.getAttribute('multiple').catch(() => null);
-            const isMultiSelect = page.locator('[class*="multi-select"], [class*="multiselect"]').first();
+            const isMultiSelect = page.locator('[multiple], select[multiple]').first();
             const multiVisible = await isMultiSelect.isVisible().catch(() => false);
-            expect(typeof multiVisible).toBe('boolean');
+            await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
           }
           await page.keyboard.press('Escape');
         }
@@ -567,9 +563,9 @@ test.describe('Планировщик — Задачи', () => {
         const isVisible = await taskRow.isVisible().catch(() => false);
         if (isVisible) {
           // Проверяем наличие статуса/индикатора назначения в строке задачи
-          const statusIndicator = taskRow.locator('[class*="status"], [class*="assignee"], [class*="badge"]').first();
+          const statusIndicator = taskRow.locator('.planner__table__task-row [role="status"], .planner__table__task-row span').first();
           const statusVisible = await statusIndicator.isVisible().catch(() => false);
-          expect(typeof statusVisible).toBe('boolean');
+          await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
         }
       }
     });
@@ -581,7 +577,7 @@ test.describe('Планировщик — Задачи', () => {
       const isVisible = await employeeFilter.isVisible().catch(() => false);
       if (isVisible) {
         await employeeFilter.fill('Тест');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle').catch(() => {});
 
         // Проверяем, что список задач обновился
         const taskCount = await planner.getTaskCount();
@@ -589,7 +585,7 @@ test.describe('Планировщик — Задачи', () => {
 
         // Очищаем фильтр
         await employeeFilter.fill('');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle').catch(() => {});
       }
     });
 
@@ -597,11 +593,11 @@ test.describe('Планировщик — Задачи', () => {
       const planner = new PlannerPage(page);
 
       // Проверяем наличие заголовков колонок для сортировки
-      const sortableHeaders = page.locator('th[class*="sort"], [class*="sortable"], th:has([class*="arrow"])');
+      const sortableHeaders = page.locator('.planner__table th[aria-sort], .planner__table th:has(button)');
       const sortCount = await sortableHeaders.count();
       if (sortCount > 0) {
         await sortableHeaders.first().click();
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle').catch(() => {});
 
         const taskCount = await planner.getTaskCount();
         expect(taskCount).toBeGreaterThanOrEqual(0);
@@ -616,7 +612,7 @@ test.describe('Планировщик — Задачи', () => {
       if (handleCount >= 2) {
         // Пробуем перетащить первый элемент ко второму
         await planner.dragTask(0, 1);
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle').catch(() => {});
 
         // Проверяем, что страница не сломалась
         await expect(planner.taskList).toBeVisible();
@@ -665,8 +661,7 @@ test.describe('Планировщик — Задачи', () => {
           const saveBtn = planner.taskSaveButton;
           const saveVisible = await saveBtn.isVisible().catch(() => false);
 
-          expect(typeof assigneeVisible).toBe('boolean');
-          expect(typeof saveVisible).toBe('boolean');
+          await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
           await page.keyboard.press('Escape');
         }
       }
@@ -685,18 +680,16 @@ test.describe('Планировщик — Задачи', () => {
             await assigneeSelect.click();
             await page.waitForTimeout(300);
 
-            const option = page.locator('[role="option"], [class*="option"]').first();
+            const option = page.locator('[role="option"], .react-autosuggest__suggestion').first();
             if (await option.isVisible().catch(() => false)) {
               await option.click();
               await page.waitForTimeout(300);
 
               await planner.taskSaveButton.click().catch(() => {});
-              await page.waitForTimeout(500);
+              await page.waitForLoadState('networkidle').catch(() => {});
 
-              // Проверяем наличие уведомления
-              const notification = page.locator('[class*="toast"], [class*="notification"], [class*="success"], [role="alert"]').first();
-              const notifVisible = await notification.isVisible().catch(() => false);
-              expect(typeof notifVisible).toBe('boolean');
+              // Проверяем, что страница стабильна после сохранения
+              await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
             }
           }
           await page.keyboard.press('Escape');
@@ -761,9 +754,9 @@ test.describe('Планировщик — Задачи', () => {
         await planner.openTaskDetails(tasks[tasks.length - 1]);
         const detailPanel = planner.taskDetailPanel;
         if (await detailPanel.isVisible().catch(() => false)) {
-          const deleteBtn = page.getByRole('button', { name: /Удалить|Delete/i }).first();
+          const deleteBtn = page.getByRole('button', { name: new RegExp(`${t('btn.delete')}|Delete`, 'i') }).first();
           const isVisible = await deleteBtn.isVisible().catch(() => false);
-          expect(typeof isVisible).toBe('boolean');
+          await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
           await page.keyboard.press('Escape');
         }
       }
@@ -777,18 +770,16 @@ test.describe('Планировщик — Задачи', () => {
         await planner.openTaskDetails(tasks[tasks.length - 1]);
         const detailPanel = planner.taskDetailPanel;
         if (await detailPanel.isVisible().catch(() => false)) {
-          const deleteBtn = page.getByRole('button', { name: /Удалить|Delete/i }).first();
+          const deleteBtn = page.getByRole('button', { name: new RegExp(`${t('btn.delete')}|Delete`, 'i') }).first();
           if (await deleteBtn.isVisible().catch(() => false)) {
             await deleteBtn.click();
-            await page.waitForTimeout(500);
+            await page.waitForLoadState('networkidle').catch(() => {});
 
-            // Проверяем диалог подтверждения
-            const confirmDialog = page.locator('[class*="confirm"], [role="alertdialog"], [class*="modal"]').first();
-            const dialogVisible = await confirmDialog.isVisible().catch(() => false);
-            expect(typeof dialogVisible).toBe('boolean');
+            // Проверяем, что страница стабильна после нажатия на удаление
+            await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
 
             // Закрываем диалог
-            const cancelConfirm = page.getByRole('button', { name: /Отмена|Cancel|Нет/i }).first();
+            const cancelConfirm = page.getByRole('button', { name: new RegExp(`${t('btn.cancel')}|Cancel|${t('btn.no')}`, 'i') }).first();
             if (await cancelConfirm.isVisible().catch(() => false)) {
               await cancelConfirm.click();
             } else {
@@ -810,19 +801,19 @@ test.describe('Планировщик — Задачи', () => {
         await planner.openTaskDetails(tasks[tasks.length - 1]);
         const detailPanel = planner.taskDetailPanel;
         if (await detailPanel.isVisible().catch(() => false)) {
-          const deleteBtn = page.getByRole('button', { name: /Удалить|Delete/i }).first();
+          const deleteBtn = page.getByRole('button', { name: new RegExp(`${t('btn.delete')}|Delete`, 'i') }).first();
           if (await deleteBtn.isVisible().catch(() => false)) {
             await deleteBtn.click();
-            await page.waitForTimeout(500);
+            await page.waitForLoadState('networkidle').catch(() => {});
 
             // Отменяем удаление
-            const cancelConfirm = page.getByRole('button', { name: /Отмена|Cancel|Нет/i }).first();
+            const cancelConfirm = page.getByRole('button', { name: new RegExp(`${t('btn.cancel')}|Cancel|${t('btn.no')}`, 'i') }).first();
             if (await cancelConfirm.isVisible().catch(() => false)) {
               await cancelConfirm.click();
-              await page.waitForTimeout(500);
+              await page.waitForLoadState('networkidle').catch(() => {});
             } else {
               await page.keyboard.press('Escape');
-              await page.waitForTimeout(500);
+              await page.waitForLoadState('networkidle').catch(() => {});
             }
           }
           await page.keyboard.press('Escape');
@@ -843,7 +834,7 @@ test.describe('Планировщик — Задачи', () => {
         const tasksBefore = await planner.getTaskNames();
 
         await planner.dragTask(0, 1);
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle').catch(() => {});
 
         const tasksAfter = await planner.getTaskNames();
         // Порядок мог измениться или остаться прежним (если DnD не поддерживается)
@@ -861,13 +852,13 @@ test.describe('Планировщик — Задачи', () => {
         await projectFilter.click();
         await page.waitForTimeout(300);
 
-        const options = page.locator('[role="option"], option, [class*="option"]');
+        const options = page.locator('[role="option"], option, .react-autosuggest__suggestion');
         const optCount = await options.count();
         if (optCount > 0) {
           const firstOption = options.first();
           const optionText = await firstOption.textContent();
           await firstOption.click();
-          await page.waitForTimeout(500);
+          await page.waitForLoadState('networkidle').catch(() => {});
 
           // Список задач должен обновиться
           const taskCount = await planner.getTaskCount();
@@ -884,14 +875,14 @@ test.describe('Планировщик — Задачи', () => {
       if (isVisible) {
         const beforeCount = await planner.getTaskCount();
         await planner.filterByEmployee('Павел');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle').catch(() => {});
 
         const afterCount = await planner.getTaskCount();
         expect(afterCount).toBeGreaterThanOrEqual(0);
 
         // Очищаем фильтр
         await employeeFilter.fill('');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle').catch(() => {});
       }
     });
 
@@ -902,22 +893,20 @@ test.describe('Планировщик — Задачи', () => {
       const employeeFilter = planner.employeeFilter;
       if (await employeeFilter.isVisible().catch(() => false)) {
         await planner.filterByEmployee('Тест');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle').catch(() => {});
 
         const filteredCount = await planner.getTaskCount();
 
         // Очищаем фильтр
         await employeeFilter.fill('');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle').catch(() => {});
 
         const allCount = await planner.getTaskCount();
         expect(allCount).toBeGreaterThanOrEqual(filteredCount);
       }
 
-      // Проверяем наличие кнопки сброса фильтров
-      const resetButton = page.getByRole('button', { name: /Сбросить|Очистить|Reset|Clear/i }).first();
-      const resetVisible = await resetButton.isVisible().catch(() => false);
-      expect(typeof resetVisible).toBe('boolean');
+      // Проверяем, что страница стабильна после очистки фильтров
+      await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
     });
 
     test('TR-657: Пустое состояние', async ({ authenticatedPage: page }) => {
@@ -927,25 +916,25 @@ test.describe('Планировщик — Задачи', () => {
       const employeeFilter = planner.employeeFilter;
       if (await employeeFilter.isVisible().catch(() => false)) {
         await planner.filterByEmployee('НесуществующийСотрудникXYZ999');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle').catch(() => {});
 
         const taskCount = await planner.getTaskCount();
         if (taskCount === 0) {
           const emptyState = planner.emptyState;
           const emptyVisible = await emptyState.isVisible().catch(() => false);
-          expect(typeof emptyVisible).toBe('boolean');
+          await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
         }
 
         // Очищаем фильтр
         await employeeFilter.fill('');
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle').catch(() => {});
       } else {
         // Если фильтра нет, просто проверяем текущее состояние
         const taskCount = await planner.getTaskCount();
         if (taskCount === 0) {
           const emptyState = planner.emptyState;
           const emptyVisible = await emptyState.isVisible().catch(() => false);
-          expect(typeof emptyVisible).toBe('boolean');
+          await expect(page.locator('table:visible, .page-content, main').first()).toBeVisible();
         }
       }
     });

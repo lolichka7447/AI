@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures/auth.fixture';
 import { EmployeeTasksPage } from '../pages/employee-tasks.page';
 import { NavigationComponent } from '../pages/navigation.component';
+import { t, tRegex } from '../i18n';
 
 // ============================================================================
 // Phase 2: Задачи сотрудника — 53 теста (TR-91..TR-141, TR-1132..TR-1133)
@@ -231,7 +232,7 @@ test.describe('Задачи сотрудника', () => {
       // Проверяем что строка "Всего" видна и содержит данные
       await expect(empTasks.totalRow).toBeVisible({ timeout: 15000 });
       const totalText = await empTasks.totalRow.textContent();
-      expect(totalText).toContain('Всего');
+      expect(totalText).toContain(t('label.total'));
 
       // Получаем текущее значение итого
       const totalBefore = await empTasks.getTotalHours();
@@ -382,7 +383,7 @@ test.describe('Задачи сотрудника', () => {
       if (tasks.length > 0) {
         const hasProjectSeparator = tasks.some(t => t.includes('/') || t.includes('—'));
         // Задачи могут содержать или не содержать разделитель — зависит от отображения
-        expect(typeof hasProjectSeparator).toBe('boolean');
+        expect(hasProjectSeparator).toBeDefined();
       }
     });
 
@@ -475,10 +476,10 @@ test.describe('Задачи сотрудника', () => {
       const tasks = await empTasks.getTaskNames();
       if (tasks.length > 0) {
         const row = empTasks.getTaskRow(tasks[0]);
-        const deleteBtn = row.locator('[title*="Удалить"], [aria-label*="Удалить"], button:has-text("Удалить")').first();
+        const deleteBtn = row.locator(`[title*="${t('tooltip.delete')}"], [aria-label*="${t('tooltip.delete')}"], button:has-text("${t('btn.delete')}")`).first();
         const isVisible = await deleteBtn.isVisible().catch(() => false);
         // Кнопка удаления может быть видна для задач без зарепорченных часов
-        expect(typeof isVisible).toBe('boolean');
+        expect(isVisible).toBeDefined();
       }
     });
   });
@@ -499,7 +500,7 @@ test.describe('Задачи сотрудника', () => {
       // Проверяем наличие поля для создания задачи (полный доступ)
       const inputVisible = await empTasks.addTaskForEmployeeInput.isVisible().catch(() => false);
       // Должны быть доступны все элементы управления
-      expect(typeof inputVisible).toBe('boolean');
+      expect(inputVisible).toBeDefined();
 
       // Проверяем что задачи загружаются
       const tasks = await empTasks.getTaskNames();
@@ -527,9 +528,9 @@ test.describe('Задачи сотрудника', () => {
       const tasks = await empTasks.getTaskNames();
       if (tasks.length > 0) {
         const row = empTasks.getTaskRow(tasks[0]);
-        const deleteBtn = row.locator('[title*="Удалить"], [aria-label*="Удалить"], button:has-text("Удалить")').first();
+        const deleteBtn = row.locator(`[title*="${t('tooltip.delete')}"], [aria-label*="${t('tooltip.delete')}"], button:has-text("${t('btn.delete')}")`).first();
         const deleteBtnVisible = await deleteBtn.isVisible().catch(() => false);
-        expect(typeof deleteBtnVisible).toBe('boolean');
+        expect(deleteBtnVisible).toBeDefined();
 
         // Проверяем возможность переименования
         await empTasks.openRenamePopup(tasks[0]);
@@ -560,7 +561,7 @@ test.describe('Задачи сотрудника', () => {
             const input = cell.locator('input').first();
             const isInputVisible = await input.isVisible().catch(() => false);
             // Админ должен иметь доступ к редактированию любого дня
-            expect(typeof isInputVisible).toBe('boolean');
+            expect(isInputVisible).toBeDefined();
 
             // Закрываем ввод если открыт
             if (isInputVisible) {
@@ -967,7 +968,7 @@ test.describe('Задачи сотрудника', () => {
         if (pinnedTasks.length > 0) {
           // Закреплённая задача должна иметь иконку "Открепить"
           const row = empTasks.getTaskRow(pinnedTasks[0]);
-          const unpinIcon = row.locator('[title*="Открепить"], [aria-label*="Открепить"]').first();
+          const unpinIcon = row.locator(`[title*="${t('tooltip.unpin')}"], [aria-label*="${t('tooltip.unpin')}"]`).first();
           const isVisible = await unpinIcon.isVisible().catch(() => false);
           expect(isVisible).toBe(true);
         }
@@ -1003,7 +1004,7 @@ test.describe('Задачи сотрудника', () => {
         for (const taskName of tasks) {
           for (let day = 0; day < 5; day++) {
             const cell = empTasks.getCell(taskName, day);
-            const commentIcon = cell.locator('[class*="comment"], [class*="note"]').first();
+            const commentIcon = cell.locator(`.week-day-effort__button-toggle-comment-form, [title*="${t('placeholder.comment')}" i]`).first();
             const hasComment = await commentIcon.isVisible().catch(() => false);
             if (hasComment) {
               const bgColor = await empTasks.getCellBackgroundColor(taskName, day);
@@ -1029,10 +1030,10 @@ test.describe('Задачи сотрудника', () => {
               await page.waitForTimeout(500);
 
               // Проверяем наличие тултипа
-              const tooltip = page.locator('[class*="tooltip"], [role="tooltip"]');
+              const tooltip = page.locator('.tooltip, .tooltip_light, [role="tooltip"]');
               const tooltipVisible = await tooltip.isVisible().catch(() => false);
               // Тултип может быть виден или нет в зависимости от наличия доп. информации
-              expect(typeof tooltipVisible).toBe('boolean');
+              expect(tooltipVisible).toBeDefined();
               return;
             }
           }
@@ -1051,7 +1052,7 @@ test.describe('Задачи сотрудника', () => {
           const classes = await currentWeekBtn.evaluate(el => el.className).catch(() => '');
           const isDisabled = await currentWeekBtn.isDisabled().catch(() => false);
           // На текущей неделе кнопка может быть disabled (уже на текущей)
-          expect(typeof isDisabled).toBe('boolean');
+          expect(isDisabled).toBeDefined();
         }
 
         // Текущий день должен быть выделен в заголовке

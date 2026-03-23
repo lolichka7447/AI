@@ -24,7 +24,7 @@ test.describe('Подтверждение — По проектам', () => {
     test('TR-550: Дропдаун проектов отображается', async ({ authenticatedPage: page }) => {
       const approval = new ApprovalTabsPage(page);
       const visible = await approval.projectDropdown.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBe(true);
     });
 
     test('TR-551: Список проектов не пуст', async ({ authenticatedPage: page }) => {
@@ -38,7 +38,7 @@ test.describe('Подтверждение — По проектам', () => {
     test('TR-552: Поиск в дропдауне проектов', async ({ authenticatedPage: page }) => {
       const approval = new ApprovalTabsPage(page);
       const visible = await approval.projectDropdown.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBe(true);
     });
 
     test('TR-553: Выбор проекта из дропдауна', async ({ authenticatedPage: page }) => {
@@ -64,19 +64,19 @@ test.describe('Подтверждение — По проектам', () => {
     test('TR-556: Фильтр по сотруднику', async ({ authenticatedPage: page }) => {
       const approval = new ApprovalTabsPage(page);
       const visible = await approval.employeeFilter.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBe(true);
     });
 
     test('TR-557: Фильтр по периоду', async ({ authenticatedPage: page }) => {
       const approval = new ApprovalTabsPage(page);
       const visible = await approval.periodFilter.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBe(true);
     });
 
     test('TR-558: Фильтр по отделу', async ({ authenticatedPage: page }) => {
       const approval = new ApprovalTabsPage(page);
       const visible = await approval.departmentFilter.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBe(true);
     });
 
     test('TR-559: Сброс фильтров', async ({ authenticatedPage: page }) => {
@@ -107,7 +107,7 @@ test.describe('Подтверждение — По проектам', () => {
     test('TR-563: Кнопка отклонения видна', async ({ authenticatedPage: page }) => {
       const approval = new ApprovalTabsPage(page);
       const visible = await approval.rejectButton.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBe(true);
     });
 
     test('TR-564: Модал отклонения открывается', async ({ authenticatedPage: page }) => {
@@ -115,9 +115,9 @@ test.describe('Подтверждение — По проектам', () => {
       if (await approval.rejectButton.isVisible().catch(() => false)) {
         await approval.rejectButton.click();
         await page.waitForTimeout(300);
-        const modal = page.locator('[class*="modal"], [role="dialog"]').first();
+        const modal = page.locator('.modal__wrapper, .modal, [role="dialog"]').first();
         const visible = await modal.isVisible().catch(() => false);
-        expect(typeof visible).toBe('boolean');
+        expect(visible).toBe(true);
         await page.keyboard.press('Escape');
       }
     });
@@ -150,7 +150,7 @@ test.describe('Подтверждение — По проектам', () => {
     test('TR-569: Кнопка подтверждения видна', async ({ authenticatedPage: page }) => {
       const approval = new ApprovalTabsPage(page);
       const visible = await approval.approveButton.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBe(true);
     });
 
     test('TR-570: Подтверждение одного сотрудника', async ({ authenticatedPage: page }) => {
@@ -161,7 +161,7 @@ test.describe('Подтверждение — По проектам', () => {
     test('TR-571: Массовое подтверждение', async ({ authenticatedPage: page }) => {
       const approval = new ApprovalTabsPage(page);
       const visible = await approval.batchApproveButton.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBe(true);
     });
 
     test('TR-572: Статус после подтверждения', async ({ authenticatedPage: page }) => {
@@ -206,7 +206,7 @@ test.describe('Подтверждение — По проектам', () => {
       const employees = await approval.getEmployeeNames();
       if (employees.length > 0) {
         const color = await approval.getCellBackgroundColor(employees[0], 0);
-        expect(typeof color).toBe('string');
+        expect(color).toBeTruthy();
       }
     });
 
@@ -295,7 +295,7 @@ test.describe('Подтверждение — По проектам', () => {
       const approval = new ApprovalTabsPage(page);
       const totalRow = approval.totalRow;
       const visible = await totalRow.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBe(true);
     });
 
     test('TR-594: Итого за период', async ({ authenticatedPage: page }) => {
@@ -307,7 +307,7 @@ test.describe('Подтверждение — По проектам', () => {
       const approval = new ApprovalTabsPage(page);
       const totalRow = approval.totalRow;
       const visible = await totalRow.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBe(true);
     });
 
     test('TR-596: Навигация по неделям', async ({ authenticatedPage: page }) => {
@@ -321,7 +321,7 @@ test.describe('Подтверждение — По проектам', () => {
     test('TR-597: Текущая неделя', async ({ authenticatedPage: page }) => {
       const approval = new ApprovalTabsPage(page);
       const visible = await approval.currentWeekButton.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBe(true);
     });
 
     test('TR-598: Отображение часов', async ({ authenticatedPage: page }) => {

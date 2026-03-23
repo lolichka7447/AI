@@ -1,0 +1,188 @@
+[
+  {
+    "date": "2026-03-23T04:23:38.489Z",
+    "timestamp": 1774239818489,
+    "totalDuration": 0,
+    "status": "failed",
+    "modules": {},
+    "summary": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "timedOut": 0,
+      "passRate": 0
+    }
+  },
+  {
+    "date": "2026-03-23T04:26:02.418Z",
+    "timestamp": 1774239962418,
+    "totalDuration": 142.5,
+    "status": "failed",
+    "modules": {
+      "unknown": {
+        "total": 35,
+        "passed": 22,
+        "failed": 13,
+        "skipped": 0,
+        "timedOut": 0,
+        "duration": 237273,
+        "failedTests": [
+          "API-AUTH-001: Check authentication status",
+          "API-AUTH-002: Get current employee info",
+          "API-AUTH-004: Get current employee settings",
+          "API-AUTH-003: Get current employee permissions",
+          "API-EMP-002: Get employee by login",
+          "API-EMP-001: Search employees returns list",
+          "API-EMP-003: Get employee roles",
+          "API-PRJ-001: List projects",
+          "API-PRJ-002: Get project types",
+          "API-PRJ-003: Get project statuses",
+          "API-OFF-001: List offices",
+          "API-VAC-001: List vacations",
+          "API-FT-001: Get all feature toggles"
+        ]
+      }
+    },
+    "summary": {
+      "total": 35,
+      "passed": 22,
+      "failed": 13,
+      "skipped": 0,
+      "timedOut": 0,
+      "passRate": 62.86
+    }
+  },
+  {
+    "date": "2026-03-23T04:28:25.641Z",
+    "timestamp": 1774240105641,
+    "totalDuration": 136.9,
+    "status": "failed",
+    "modules": {
+      "unknown": {
+        "total": 35,
+        "passed": 22,
+        "failed": 13,
+        "skipped": 0,
+        "timedOut": 0,
+        "duration": 230490,
+        "failedTests": [
+          "API-AUTH-002: Get current employee info",
+          "API-AUTH-001: Check authentication status",
+          "API-AUTH-003: Get current employee permissions",
+          "API-AUTH-004: Get current employee settings",
+          "API-EMP-001: Search employees returns list",
+          "API-EMP-003: Get employee roles",
+          "API-EMP-002: Get employee by login",
+          "API-PRJ-001: List projects",
+          "API-PRJ-003: Get project statuses",
+          "API-PRJ-002: Get project types",
+          "API-OFF-001: List offices",
+          "API-VAC-001: List vacations",
+          "API-FT-001: Get all feature toggles"
+        ]
+      }
+    },
+    "summary": {
+      "total": 35,
+      "passed": 22,
+      "failed": 13,
+      "skipped": 0,
+      "timedOut": 0,
+      "passRate": 62.86
+    }
+  },
+  {
+    "date": "2026-03-23T04:32:13.523Z",
+    "timestamp": 1774240333523,
+    "totalDuration": 145.3,
+    "status": "failed",
+    "modules": {
+      "unknown": {
+        "total": 35,
+        "passed": 22,
+        "failed": 13,
+        "skipped": 0,
+        "timedOut": 0,
+        "duration": 244924,
+        "failedTests": [
+          "API-AUTH-001: Check authentication status",
+          "API-AUTH-002: Get current employee info",
+          "API-AUTH-003: Get current employee permissions",
+          "API-AUTH-004: Get current employee settings",
+          "API-EMP-001: Search employees returns list",
+          "API-EMP-002: Get employee by login",
+          "API-EMP-003: Get employee roles",
+          "API-PRJ-002: Get project types",
+          "API-PRJ-001: List projects",
+          "API-PRJ-003: Get project statuses",
+          "API-OFF-001: List offices",
+          "API-VAC-001: List vacations",
+          "API-FT-001: Get all feature toggles"
+        ]
+      }
+    },
+    "summary": {
+      "total": 35,
+      "passed": 22,
+      "failed": 13,
+      "skipped": 0,
+      "timedOut": 0,
+      "passRate": 62.86
+    }
+  },
+  {
+    "date": "2026-03-23T04:36:13.577Z",
+    "timestamp": 1774240573577,
+    "totalDuration": 234,
+    "status": "failed",
+    "modules": {
+      "unknown": {
+        "total": 35,
+        "passed": 22,
+        "failed": 13,
+        "skipped": 0,
+        "timedOut": 0,
+        "duration": 217615,
+        "failedTests": [
+          "API-AUTH-001: Check authentication status",
+          "API-AUTH-002: Get current employee info",
+          "API-AUTH-003: Get current employee permissions",
+          "API-AUTH-004: Get current employee settings",
+          "API-EMP-001: Search employees returns list",
+          "API-EMP-002: Get employee by login",
+          "API-EMP-003: Get employee roles",
+          "API-PRJ-001: List projects",
+          "API-PRJ-002: Get project types",
+          "API-PRJ-003: Get project statuses",
+          "API-OFF-001: List offices",
+          "API-VAC-001: List vacations",
+          "API-FT-001: Get all feature toggles"
+        ]
+      }
+    },
+    "summary": {
+      "total": 35,
+      "passed": 22,
+      "failed": 13,
+      "skipped": 0,
+      "timedOut": 0,
+      "passRate": 62.86
+    }
+  },
+  {
+    "date": "2026-03-23T04:36:21.220Z",
+    "timestamp": 1774240581220,
+    "totalDuration": 0,
+    "status": "failed",
+    "modules": {},
+    "summary": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "timedOut": 0,
+      "passRate": 0
+    }
+  }
+]

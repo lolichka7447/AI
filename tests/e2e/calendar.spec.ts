@@ -143,7 +143,7 @@ test.describe('Календарь отсутствий', () => {
 
       const isHighlighted = await calendar.isTodayHighlighted();
       // Текущий день должен быть подсвечен если мы на текущем месяце
-      expect(typeof isHighlighted).toBe('boolean');
+      expect(isHighlighted).toBe(true);
     });
   });
 

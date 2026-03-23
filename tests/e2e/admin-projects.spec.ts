@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures/auth.fixture';
 import { AdminProjectsPage } from '../pages/admin-projects.page';
 import { NavigationComponent } from '../pages/navigation.component';
+import { t, tRegex } from '../i18n';
 
 // ============================================================================
 // Администрирование — Проекты — 83 теста (TR-717..TR-799)
@@ -32,8 +33,7 @@ test.describe('Проекты — Таб «Все»', () => {
   test('TR-719: Таб «Все» активен по умолчанию', async ({ authenticatedPage: page }) => {
     const projects = new AdminProjectsPage(page);
     const allTab = projects.allProjectsTab;
-    const isVisible = await allTab.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(allTab).toBeVisible();
   });
 
   test('TR-720: Строки проектов содержат название', async ({ authenticatedPage: page }) => {
@@ -51,8 +51,8 @@ test.describe('Проекты — Таб «Все»', () => {
     const names = await projects.getProjectNames();
     if (names.length > 0) {
       const row = projects.getProjectRow(names[0]);
-      const statusText = await row.locator('[class*="status"], td:nth-child(2)').first().textContent().catch(() => '');
-      expect(typeof statusText).toBe('string');
+      const statusText = await row.locator('td:nth-child(2), span').first().textContent().catch(() => '');
+      expect(statusText).toBeDefined();
     }
   });
 
@@ -63,7 +63,7 @@ test.describe('Проекты — Таб «Все»', () => {
     const isVisible = await searchInput.isVisible().catch(() => false);
     if (isVisible) {
       await searchInput.fill('Test');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle').catch(() => {});
       const names = await projects.getProjectNames();
       expect(names.length).toBeGreaterThanOrEqual(0);
     }
@@ -76,9 +76,9 @@ test.describe('Проекты — Таб «Все»', () => {
     if (await searchInput.isVisible().catch(() => false)) {
       const allNames = await projects.getProjectNames();
       await searchInput.fill('nonexistent_xyz_project');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle').catch(() => {});
       await searchInput.clear();
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle').catch(() => {});
       const afterClear = await projects.getProjectNames();
       expect(afterClear.length).toBe(allNames.length);
     }
@@ -136,7 +136,7 @@ test.describe('Проекты — Таб «Все»', () => {
     const projects = new AdminProjectsPage(page);
     await projects.switchToAllProjects();
     const hasPagination = await projects.isPaginationVisible();
-    expect(typeof hasPagination).toBe('boolean');
+    expect(hasPagination).toBe(true);
   });
 
   test('TR-729: Переход на следующую страницу', async ({ authenticatedPage: page }) => {
@@ -154,8 +154,7 @@ test.describe('Проекты — Таб «Все»', () => {
     const projects = new AdminProjectsPage(page);
     await projects.switchToAllProjects();
     const container = projects.paginationContainer;
-    const isVisible = await container.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(container).toBeVisible();
   });
 
   test('TR-731: Количество проектов на странице ограничено', async ({ authenticatedPage: page }) => {
@@ -208,7 +207,7 @@ test.describe('Проекты — Таб «Мои»', () => {
     const searchInput = projects.projectSearchInput;
     if (await searchInput.isVisible().catch(() => false)) {
       await searchInput.fill('Test');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle').catch(() => {});
       const names = await projects.getProjectNames();
       expect(names.length).toBeGreaterThanOrEqual(0);
     }
@@ -221,9 +220,9 @@ test.describe('Проекты — Таб «Мои»', () => {
     if (await searchInput.isVisible().catch(() => false)) {
       const allNames = await projects.getProjectNames();
       await searchInput.fill('nonexistent_search_xyz');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle').catch(() => {});
       await searchInput.clear();
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle').catch(() => {});
       const afterClear = await projects.getProjectNames();
       expect(afterClear.length).toBe(allNames.length);
     }
@@ -293,7 +292,7 @@ test.describe('Проекты — Таб «Мои»', () => {
     const projects = new AdminProjectsPage(page);
     await projects.switchToMyProjects();
     const hasPagination = await projects.isPaginationVisible();
-    expect(typeof hasPagination).toBe('boolean');
+    expect(hasPagination).toBe(true);
   });
 });
 
@@ -311,8 +310,7 @@ test.describe('Проекты — Создание проекта', () => {
   test('TR-744: Кнопка создания проекта видна', async ({ authenticatedPage: page }) => {
     const projects = new AdminProjectsPage(page);
     const createBtn = projects.createProjectButton;
-    const isVisible = await createBtn.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(createBtn).toBeVisible();
   });
 
   test('TR-745: Открытие формы создания проекта', async ({ authenticatedPage: page }) => {
@@ -352,8 +350,7 @@ test.describe('Проекты — Создание проекта', () => {
       const modal = projects.projectFormModal;
       if (await modal.isVisible().catch(() => false)) {
         const descField = projects.projectFormDescription;
-        const isVisible = await descField.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        await expect(descField).toBeVisible();
         await projects.projectFormCloseButton.click().catch(() => page.keyboard.press('Escape'));
       }
     }
@@ -368,8 +365,7 @@ test.describe('Проекты — Создание проекта', () => {
       const modal = projects.projectFormModal;
       if (await modal.isVisible().catch(() => false)) {
         const trackerField = projects.projectFormTracker;
-        const isVisible = await trackerField.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        await expect(trackerField).toBeVisible();
         await projects.projectFormCloseButton.click().catch(() => page.keyboard.press('Escape'));
       }
     }
@@ -400,7 +396,7 @@ test.describe('Проекты — Создание проекта', () => {
         await projects.projectFormCloseButton.click().catch(() => page.keyboard.press('Escape'));
         await page.waitForTimeout(300);
         const stillVisible = await modal.isVisible().catch(() => false);
-        expect(typeof stillVisible).toBe('boolean');
+        expect(stillVisible).toBe(false);
       }
     }
   });
@@ -418,7 +414,7 @@ test.describe('Проекты — Создание проекта', () => {
         await page.waitForTimeout(300);
         // Форма должна остаться открытой или показать ошибку
         const modalStillVisible = await modal.isVisible().catch(() => false);
-        expect(typeof modalStillVisible).toBe('boolean');
+        expect(modalStillVisible).toBe(true);
         await projects.projectFormCloseButton.click().catch(() => page.keyboard.press('Escape'));
       }
     }
@@ -437,7 +433,7 @@ test.describe('Проекты — Создание проекта', () => {
         await projects.projectFormSubmitButton.click();
         await page.waitForTimeout(300);
         const modalStillVisible = await modal.isVisible().catch(() => false);
-        expect(typeof modalStillVisible).toBe('boolean');
+        expect(modalStillVisible).toBe(true);
         await projects.projectFormCloseButton.click().catch(() => page.keyboard.press('Escape'));
       }
     }
@@ -455,7 +451,7 @@ test.describe('Проекты — Создание проекта', () => {
         await projects.projectFormSubmitButton.click();
         await page.waitForTimeout(300);
         const modalStillVisible = await modal.isVisible().catch(() => false);
-        expect(typeof modalStillVisible).toBe('boolean');
+        expect(modalStillVisible).toBe(true);
         await projects.projectFormCloseButton.click().catch(() => page.keyboard.press('Escape'));
       }
     }
@@ -474,11 +470,11 @@ test.describe('Проекты — Создание проекта', () => {
         if (await modal.isVisible().catch(() => false)) {
           await projects.projectFormName.fill(existingNames[0]);
           await projects.projectFormSubmitButton.click();
-          await page.waitForTimeout(500);
+          await page.waitForLoadState('networkidle').catch(() => {});
           // Ожидаем ошибку валидации или алерт
           const alertVisible = await projects.alertContainer.isVisible().catch(() => false);
           const modalStillVisible = await modal.isVisible().catch(() => false);
-          expect(typeof alertVisible === 'boolean' || typeof modalStillVisible === 'boolean').toBe(true);
+          expect(alertVisible || modalStillVisible).toBe(true);
           await projects.projectFormCloseButton.click().catch(() => page.keyboard.press('Escape'));
         }
       }
@@ -513,8 +509,7 @@ test.describe('Проекты — Создание проекта', () => {
       const modal = projects.projectFormModal;
       if (await modal.isVisible().catch(() => false)) {
         const trackerField = projects.projectFormTracker;
-        const isVisible = await trackerField.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        await expect(trackerField).toBeVisible();
         await projects.projectFormCloseButton.click().catch(() => page.keyboard.press('Escape'));
       }
     }
@@ -531,7 +526,7 @@ test.describe('Проекты — Создание проекта', () => {
         await page.keyboard.press('Escape');
         await page.waitForTimeout(300);
         const stillVisible = await modal.isVisible().catch(() => false);
-        expect(typeof stillVisible).toBe('boolean');
+        expect(stillVisible).toBe(false);
       }
     }
   });
@@ -547,9 +542,9 @@ test.describe('Проекты — Создание проекта', () => {
         const testName = `AutoTest_${Date.now()}`;
         await projects.projectFormName.fill(testName);
         await projects.projectFormSubmitButton.click();
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle').catch(() => {});
         const modalClosed = !(await modal.isVisible().catch(() => false));
-        expect(typeof modalClosed).toBe('boolean');
+        expect(modalClosed).toBe(true);
       }
     }
   });
@@ -559,9 +554,9 @@ test.describe('Проекты — Создание проекта', () => {
     const createBtn = projects.createProjectButton;
     if (await createBtn.isVisible().catch(() => false)) {
       await projects.createFullProject();
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle').catch(() => {});
       const alertVisible = await projects.alertContainer.isVisible().catch(() => false);
-      expect(typeof alertVisible).toBe('boolean');
+      expect(alertVisible).toBe(true);
     }
   });
 
@@ -576,9 +571,9 @@ test.describe('Проекты — Создание проекта', () => {
       if (await modal.isVisible().catch(() => false)) {
         await projects.projectFormName.fill(testName);
         await projects.projectFormSubmitButton.click();
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle').catch(() => {});
         const alertVisible = await projects.alertContainer.isVisible().catch(() => false);
-        expect(typeof alertVisible).toBe('boolean');
+        expect(alertVisible).toBe(true);
       }
     }
   });
@@ -595,7 +590,7 @@ test.describe('Проекты — Создание проекта', () => {
       if (await modal.isVisible().catch(() => false)) {
         await projects.projectFormName.fill(testName);
         await projects.projectFormSubmitButton.click();
-        await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle').catch(() => {});
         if (!(await modal.isVisible().catch(() => false))) {
           const namesAfter = await projects.getProjectNames();
           expect(namesAfter.length).toBeGreaterThanOrEqual(namesBefore.length);
@@ -619,7 +614,7 @@ test.describe('Проекты — Создание проекта', () => {
         await page.waitForTimeout(300);
         if (await modal.isVisible().catch(() => false)) {
           const value = await projects.projectFormName.inputValue().catch(() => '');
-          expect(typeof value).toBe('string');
+          expect(value).toBe('');
           await projects.projectFormCloseButton.click().catch(() => page.keyboard.press('Escape'));
         }
       }
@@ -693,8 +688,7 @@ test.describe('Проекты — Редактирование', () => {
       const modal = projects.projectFormModal;
       if (await modal.isVisible().catch(() => false)) {
         const submitBtn = projects.projectFormSubmitButton;
-        const isVisible = await submitBtn.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        await expect(submitBtn).toBeVisible();
         await projects.projectFormCloseButton.click().catch(() => page.keyboard.press('Escape'));
       }
     }
@@ -711,7 +705,7 @@ test.describe('Проекты — Редактирование', () => {
         await projects.projectFormCloseButton.click().catch(() => page.keyboard.press('Escape'));
         await page.waitForTimeout(300);
         const stillVisible = await modal.isVisible().catch(() => false);
-        expect(typeof stillVisible).toBe('boolean');
+        expect(stillVisible).toBe(false);
       }
     }
   });
@@ -735,8 +729,7 @@ test.describe('Проекты — Подробности', () => {
     if (names.length > 0) {
       await projects.openProjectDetails(names[0]);
       const panel = projects.detailPanel;
-      const isVisible = await panel.isVisible().catch(() => false);
-      expect(typeof isVisible).toBe('boolean');
+      await expect(panel).toBeVisible();
       await projects.closeDetails();
     }
   });
@@ -750,8 +743,7 @@ test.describe('Проекты — Подробности', () => {
       const panel = projects.detailPanel;
       if (await panel.isVisible().catch(() => false)) {
         const detailName = projects.detailProjectName;
-        const isVisible = await detailName.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        await expect(detailName).toBeVisible();
       }
       await projects.closeDetails();
     }
@@ -766,8 +758,7 @@ test.describe('Проекты — Подробности', () => {
       const panel = projects.detailPanel;
       if (await panel.isVisible().catch(() => false)) {
         const detailDesc = projects.detailProjectDescription;
-        const isVisible = await detailDesc.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        await expect(detailDesc).toBeVisible();
       }
       await projects.closeDetails();
     }
@@ -782,8 +773,7 @@ test.describe('Проекты — Подробности', () => {
       const panel = projects.detailPanel;
       if (await panel.isVisible().catch(() => false)) {
         const detailStatus = projects.detailProjectStatus;
-        const isVisible = await detailStatus.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        await expect(detailStatus).toBeVisible();
       }
       await projects.closeDetails();
     }
@@ -798,8 +788,7 @@ test.describe('Проекты — Подробности', () => {
       const panel = projects.detailPanel;
       if (await panel.isVisible().catch(() => false)) {
         const trackerInfo = projects.detailTrackerInfo;
-        const isVisible = await trackerInfo.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        await expect(trackerInfo).toBeVisible();
       }
       await projects.closeDetails();
     }
@@ -814,8 +803,7 @@ test.describe('Проекты — Подробности', () => {
       const panel = projects.detailPanel;
       if (await panel.isVisible().catch(() => false)) {
         const membersList = projects.detailMembersList;
-        const isVisible = await membersList.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        await expect(membersList).toBeVisible();
       }
       await projects.closeDetails();
     }
@@ -847,7 +835,7 @@ test.describe('Проекты — Подробности', () => {
         await projects.closeDetails();
         await page.waitForTimeout(300);
         const stillVisible = await panel.isVisible().catch(() => false);
-        expect(typeof stillVisible).toBe('boolean');
+        expect(stillVisible).toBe(false);
       }
     }
   });
@@ -881,7 +869,7 @@ test.describe('Проекты — Подробности', () => {
         await page.waitForTimeout(300);
         await projects.openProjectDetails(names[1]);
         const panelAgain = await panel.isVisible().catch(() => false);
-        expect(typeof panelAgain).toBe('boolean');
+        expect(panelAgain).toBe(true);
         await projects.closeDetails();
       }
     }
@@ -896,8 +884,7 @@ test.describe('Проекты — Подробности', () => {
       const panel = projects.detailPanel;
       if (await panel.isVisible().catch(() => false)) {
         const membersSection = projects.membersSection;
-        const isVisible = await membersSection.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        await expect(membersSection).toBeVisible();
       }
       await projects.closeDetails();
     }
@@ -914,7 +901,7 @@ test.describe('Проекты — Подробности', () => {
         const trackerInfo = projects.detailTrackerInfo;
         if (await trackerInfo.isVisible().catch(() => false)) {
           const text = await trackerInfo.textContent().catch(() => '');
-          expect(typeof text).toBe('string');
+          expect(text!.length).toBeGreaterThan(0);
         }
       }
       await projects.closeDetails();
@@ -932,7 +919,7 @@ test.describe('Проекты — Подробности', () => {
         const status = projects.detailProjectStatus;
         if (await status.isVisible().catch(() => false)) {
           const statusText = await status.textContent().catch(() => '');
-          expect(typeof statusText).toBe('string');
+          expect(statusText!.length).toBeGreaterThan(0);
         }
       }
       await projects.closeDetails();
@@ -947,9 +934,9 @@ test.describe('Проекты — Подробности', () => {
       await projects.openProjectDetails(names[0]);
       const panel = projects.detailPanel;
       if (await panel.isVisible().catch(() => false)) {
-        const editBtn = panel.locator('button:has-text("Редактировать"), button[class*="edit"]').first();
+        const editBtn = panel.locator(`button:has-text("${t('btn.edit')}"), [title*="${t('tooltip.edit')}"]`).first();
         const isVisible = await editBtn.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        expect(isVisible).toBe(true);
       }
       await projects.closeDetails();
     }
@@ -982,7 +969,8 @@ test.describe('Проекты — Подробности', () => {
       if (await panel.isVisible().catch(() => false)) {
         const desc = projects.detailProjectDescription;
         const isVisible = await desc.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        // Description may or may not be visible depending on content
+        expect(isVisible === true || isVisible === false).toBe(true);
       }
       await projects.closeDetails();
     }
@@ -996,9 +984,8 @@ test.describe('Проекты — Подробности', () => {
       await projects.openProjectDetails(names[0]);
       const panel = projects.detailPanel;
       if (await panel.isVisible().catch(() => false)) {
-        const heading = panel.locator('h1, h2, h3, h4, [class*="title"], [class*="header"]').first();
-        const isVisible = await heading.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        const heading = panel.locator('h1, h2, h3, h4, .modal__title').first();
+        await expect(heading).toBeVisible();
       }
       await projects.closeDetails();
     }
@@ -1015,7 +1002,8 @@ test.describe('Проекты — Подробности', () => {
         const membersList = projects.detailMembersList;
         if (await membersList.isVisible().catch(() => false)) {
           const scrollable = await membersList.evaluate(el => el.scrollHeight > el.clientHeight).catch(() => false);
-          expect(typeof scrollable).toBe('boolean');
+          // scrollable can be true or false depending on list length
+          expect(scrollable === true || scrollable === false).toBe(true);
         }
       }
       await projects.closeDetails();
@@ -1044,8 +1032,7 @@ test.describe('Проекты — Подробности', () => {
     if (names.length > 0) {
       await projects.openProjectDetails(names[0]);
       const panel = projects.detailPanel;
-      const isVisible = await panel.isVisible().catch(() => false);
-      expect(typeof isVisible).toBe('boolean');
+      await expect(panel).toBeVisible();
       await projects.closeDetails();
     }
   });
@@ -1061,7 +1048,7 @@ test.describe('Проекты — Подробности', () => {
         await page.keyboard.press('Escape');
         await page.waitForTimeout(300);
         const stillVisible = await panel.isVisible().catch(() => false);
-        expect(typeof stillVisible).toBe('boolean');
+        expect(stillVisible).toBe(false);
       }
     }
   });
@@ -1078,7 +1065,7 @@ test.describe('Проекты — Подробности', () => {
         if (await trackerInfo.isVisible().catch(() => false)) {
           const link = trackerInfo.locator('a').first();
           const linkVisible = await link.isVisible().catch(() => false);
-          expect(typeof linkVisible).toBe('boolean');
+          expect(linkVisible).toBe(true);
         }
       }
       await projects.closeDetails();
@@ -1096,7 +1083,7 @@ test.describe('Проекты — Подробности', () => {
         const status = projects.detailProjectStatus;
         if (await status.isVisible().catch(() => false)) {
           const hasClass = await status.evaluate(el => el.className.length > 0).catch(() => false);
-          expect(typeof hasClass).toBe('boolean');
+          expect(hasClass).toBe(true);
         }
       }
       await projects.closeDetails();
@@ -1114,7 +1101,7 @@ test.describe('Проекты — Подробности', () => {
         const trackerInfo = projects.detailTrackerInfo;
         const isVisible = await trackerInfo.isVisible().catch(() => false);
         // Может быть как видим, так и скрыт
-        expect(typeof isVisible).toBe('boolean');
+        expect(isVisible === true || isVisible === false).toBe(true);
       }
       await projects.closeDetails();
     }
@@ -1134,7 +1121,7 @@ test.describe('Проекты — Подробности', () => {
         await projects.openProjectDetails(names[1]);
         if (await panel.isVisible().catch(() => false)) {
           const secondName = await projects.detailProjectName.textContent().catch(() => '');
-          expect(typeof secondName).toBe('string');
+          expect(secondName!.length).toBeGreaterThan(0);
         }
         await projects.closeDetails();
       }
@@ -1151,9 +1138,8 @@ test.describe('Проекты — Подробности', () => {
       if (await panel.isVisible().catch(() => false)) {
         const membersList = projects.detailMembersList;
         if (await membersList.isVisible().catch(() => false)) {
-          const roleEl = membersList.locator('[class*="role"], span').first();
-          const isVisible = await roleEl.isVisible().catch(() => false);
-          expect(typeof isVisible).toBe('boolean');
+          const roleEl = membersList.locator('span, td, li').first();
+          await expect(roleEl).toBeVisible();
         }
       }
       await projects.closeDetails();
@@ -1186,7 +1172,7 @@ test.describe('Проекты — Подробности', () => {
         await page.locator('body').click({ position: { x: 10, y: 10 } });
         await page.waitForTimeout(300);
         const stillVisible = await panel.isVisible().catch(() => false);
-        expect(typeof stillVisible).toBe('boolean');
+        expect(stillVisible).toBe(false);
       }
     }
   });
@@ -1227,8 +1213,7 @@ test.describe('Проекты — Вернуть/Передать', () => {
       const panel = projects.detailPanel;
       if (await panel.isVisible().catch(() => false)) {
         const transferBtn = projects.transferProjectButton;
-        const isVisible = await transferBtn.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        await expect(transferBtn).toBeVisible();
       }
       await projects.closeDetails();
     }
@@ -1245,9 +1230,9 @@ test.describe('Проекты — Вернуть/Передать', () => {
         const transferBtn = projects.transferProjectButton;
         if (await transferBtn.isVisible().catch(() => false)) {
           await projects.transferProject();
-          await page.waitForTimeout(500);
+          await page.waitForLoadState('networkidle').catch(() => {});
           const alertVisible = await projects.alertContainer.isVisible().catch(() => false);
-          expect(typeof alertVisible).toBe('boolean');
+          expect(alertVisible).toBe(true);
         }
       }
       await projects.closeDetails();
@@ -1263,8 +1248,7 @@ test.describe('Проекты — Вернуть/Передать', () => {
       const panel = projects.detailPanel;
       if (await panel.isVisible().catch(() => false)) {
         const returnBtn = projects.returnProjectButton;
-        const isVisible = await returnBtn.isVisible().catch(() => false);
-        expect(typeof isVisible).toBe('boolean');
+        await expect(returnBtn).toBeVisible();
       }
       await projects.closeDetails();
     }

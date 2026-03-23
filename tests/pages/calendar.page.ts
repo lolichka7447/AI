@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
+import { t } from '../i18n';
 
 export class CalendarPage extends BasePage {
   // Month navigation
@@ -34,19 +35,19 @@ export class CalendarPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    // Month navigation
-    this.prevMonthButton = page.locator('button:has(svg):near(:text("Январь"), 200), button[class*="prev"]').first();
-    this.nextMonthButton = page.locator('button:has(svg):near(:text("Январь"), 200), button[class*="next"]').last();
-    this.currentMonthLabel = page.locator('[class*="month-label"], [class*="current-month"], h2, h3').first();
+    // Month navigation — uses standard prev/next buttons
+    this.prevMonthButton = page.locator('button[class*="prev"], button:has(svg)').first();
+    this.nextMonthButton = page.locator('button[class*="next"], button:has(svg)').last();
+    this.currentMonthLabel = page.locator('.page-header__left, h2, h3, [class*="month-label"]').first();
 
     // Calendar grid
-    this.calendarGrid = page.locator('[class*="calendar-grid"], [class*="calendar-table"], table').first();
-    this.calendarDays = this.calendarGrid.locator('td, [class*="day-cell"]');
-    this.todayCell = this.calendarGrid.locator('[class*="today"], [class*="current"]').first();
+    this.calendarGrid = page.locator('table:visible, [class*="calendar"]').first();
+    this.calendarDays = this.calendarGrid.locator('td');
+    this.todayCell = this.calendarGrid.locator('[class*="today"], [class*="current"], td.today').first();
 
     // Filters
-    this.departmentFilter = page.locator('[class*="department-filter"], select:has-text("Отдел")').first();
-    this.employeeFilter = page.locator('[class*="employee-filter"], input[placeholder*="сотрудник" i]').first();
+    this.departmentFilter = page.locator(`[class*="department-filter"], select:has-text("${t('filter.department')}")`).first();
+    this.employeeFilter = page.locator(`[class*="employee-filter"], input[placeholder*="${t('placeholder.employee')}" i]`).first();
 
     // Legend
     this.legend = page.locator('[class*="legend"]').first();

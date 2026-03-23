@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
+import { t } from '../i18n';
 
 /**
  * Page Object for /sick-leave/my — Мои больничные
@@ -37,25 +38,25 @@ export class MySickLeavePage extends BasePage {
 
     this.sickLeaveList = page.locator('[class*="sick-leave-list"], table, main').first();
     this.sickLeaveItems = this.sickLeaveList.locator('tr, [class*="sick-leave-item"]');
-    this.emptyState = page.locator('[class*="empty"], text=/нет больничных/i, text=/нет данных/i').first();
+    this.emptyState = page.locator(`[class*="empty"], text=/${t('msg.noSickLeaves')}/i, text=/${t('msg.noData')}/i`).first();
 
-    this.createButton = page.getByRole('button', { name: /Создать|Добавить|Открыть больничный/i }).first();
-    this.modal = page.locator('[class*="modal"], [role="dialog"]').first();
+    this.createButton = page.getByRole('button', { name: new RegExp(t('btn.create'), 'i') }).first();
+    this.modal = page.locator('.modal__wrapper, .modal, [role="dialog"]').first();
     this.dateStartInput = this.modal.locator('input[type="date"], input[class*="start"]').first();
     this.dateEndInput = this.modal.locator('input[type="date"], input[class*="end"]').last();
-    this.commentInput = this.modal.locator('textarea, input[placeholder*="коммент" i]').first();
+    this.commentInput = this.modal.locator(`textarea, input[placeholder*="${t('placeholder.comment')}" i]`).first();
     this.fileUploadInput = this.modal.locator('input[type="file"]').first();
-    this.submitButton = this.modal.locator('button:has-text("Сохранить"), button:has-text("Создать"), button[type="submit"]').first();
-    this.cancelButton = this.modal.locator('button:has-text("Отмена"), button:has-text("Закрыть")').first();
+    this.submitButton = this.modal.locator(`button:has-text("${t('btn.save')}"), button:has-text("${t('btn.create')}"), button[type="submit"]`).first();
+    this.cancelButton = this.modal.locator(`button:has-text("${t('btn.cancel')}"), button:has-text("${t('btn.close')}")`).first();
 
-    this.closeButton = page.getByRole('button', { name: /Закрыть больничный|Close/i }).first();
-    this.deleteButton = page.getByRole('button', { name: /Удалить|Delete/i }).first();
-    this.editButton = page.getByRole('button', { name: /Редактировать|Edit/i }).first();
-    this.addCommentButton = page.getByRole('button', { name: /Комментарий|Comment/i }).first();
+    this.closeButton = page.getByRole('button', { name: new RegExp(t('btn.closeSickLeave'), 'i') }).first();
+    this.deleteButton = page.getByRole('button', { name: new RegExp(t('btn.delete'), 'i') }).first();
+    this.editButton = page.getByRole('button', { name: new RegExp(t('btn.edit'), 'i') }).first();
+    this.addCommentButton = page.getByRole('button', { name: new RegExp(t('btn.comment'), 'i') }).first();
 
     this.statusBadge = page.locator('[class*="status"], [class*="badge"]').first();
 
-    this.alertContainer = page.locator('[class*="alert"], [class*="toast"], [role="alert"]').first();
+    this.alertContainer = page.locator('.popup.popup_show, [role="alert"], .rc-notification').first();
   }
 
   get url() { return '/sick-leave/my'; }

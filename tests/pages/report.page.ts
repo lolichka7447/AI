@@ -1,5 +1,6 @@
 import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from './base.page';
+import { t } from '../i18n';
 
 export class ReportPage extends BasePage {
   // Add task input
@@ -58,58 +59,63 @@ export class ReportPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    // Add task
-    this.addTaskInput = page.locator('input[placeholder*="Мой проект"]');
-    this.addTaskButton = page.locator('button:has-text("Добавить"), button[type="submit"]').first();
+    // Add task — uses react-autosuggest input
+    this.addTaskInput = page.locator('input.react-autosuggest__input').first()
+      .or(page.locator(`input[placeholder*="${t('placeholder.myProject')}"]`));
+    this.addTaskButton = page.locator(`button:has-text("${t('btn.add')}"), button[type="submit"]`).first();
 
     // Work summary: "В марте отработано: 0/24/176"
-    this.workSummary = page.locator('text=/отработано/i').first();
-    this.workSummaryInfo = page.locator('[class*="info"], button:near(:text("отработано"))').first();
+    this.workSummary = page.locator(`text=/${t('label.worked')}/i`).first();
+    this.workSummaryInfo = page.locator('.page-header__end, .page-header__left').first()
+      .or(page.locator(`button:near(:text("${t('label.worked')}"))`).first());
 
-    // Week navigation
-    this.currentWeekButton = page.getByText('Текущая неделя');
-    this.prevWeekButton = page.locator('button:has(svg), button:has(img)').first();
-    this.nextWeekButton = page.locator('button:has(svg), button:has(img)').nth(1);
-    this.dateRange = page.locator('text=/\\d{2}\\.\\d{2}\\.\\d{4}.*–.*\\d{2}\\.\\d{2}\\.\\d{4}/');
+    // Week navigation — real BEM classes from WeekSwitcher component
+    this.currentWeekButton = page.locator('button.week-switcher__button-set-current-week').first();
+    this.prevWeekButton = page.locator('button.week-switcher__button-switch_prev').first();
+    this.nextWeekButton = page.locator('button.week-switcher__button-switch_next').first();
+    this.dateRange = page.locator('span.week-switcher__date').first()
+      .or(page.locator('text=/\\d{2}\\.\\d{2}\\.\\d{4}/').first());
 
-    // Table
-    this.taskTable = page.locator('table').first();
-    this.totalRow = page.locator('tr:has-text("Всего")').last();
-    this.activeTasksHeader = page.locator('text=Активные задачи');
+    // Table — rc-table renders <table>, cells have table-task-reports prefix
+    this.taskTable = page.locator('table:visible').first();
+    this.totalRow = page.locator(`tr:has-text("${t('label.total')}")`).last();
+    this.activeTasksHeader = page.locator(`text=/${t('label.activeTasks')}/i`).first();
 
-    // View toggles (compact/normal icons near "Активные задачи")
-    this.compactViewButton = page.locator('[title*="Компактный"], [aria-label*="Компактный"]').first();
-    this.normalViewButton = page.locator('[title*="Обычный"], [aria-label*="Обычный"]').first();
+    // View toggles — in FirstTitleContainer (compact/normal icons)
+    this.compactViewButton = page.locator(`[title*="${t('tooltip.compact')}"], [aria-label*="${t('tooltip.compact')}"]`).first();
+    this.normalViewButton = page.locator(`[title*="${t('tooltip.normal')}"], [aria-label*="${t('tooltip.normal')}"]`).first();
 
     // Group by projects
-    this.groupByProjectsCheckbox = page.getByRole('checkbox', { name: 'Группировать по проектам' });
+    this.groupByProjectsCheckbox = page.getByRole('checkbox', { name: new RegExp(t('label.groupByProjects'), 'i') })
+      .or(page.locator('input[type="checkbox"]').first());
 
-    // Alerts (toast notifications at top of page)
-    this.alertContainer = page.locator('[class*="alert"], [class*="toast"], [class*="notification"], [role="alert"]').first();
+    // Alerts — uses popup component (div.popup.popup_show) or rc-notification
+    this.alertContainer = page.locator('.popup.popup_show, [role="alert"], .rc-notification').first();
 
     // Rejected reports block
-    this.rejectedReportsBlock = page.locator('[class*="rejected"], [class*="decline"]').first();
-    this.goToReportButton = page.getByText('Перейти к репорту');
-    this.resendHoursButton = page.getByText('Отправить часы повторно');
+    this.rejectedReportsBlock = page.locator('[class*="auto-rejected"], [class*="rejected"]').first();
+    this.goToReportButton = page.getByText(t('btn.goToReport'));
+    this.resendHoursButton = page.getByText(t('btn.resendHours'));
 
-    // Rename popup
-    this.renamePopup = page.locator('[class*="modal"], [class*="popup"], [role="dialog"]').first();
-    this.renameInput = page.locator('[class*="modal"] input, [class*="popup"] input, [role="dialog"] input').first();
-    this.renameButton = page.getByRole('button', { name: 'Переименовать' });
-    this.renameError = page.locator('[class*="modal"] [class*="error"], [role="dialog"] [class*="error"]').first();
+    // Rename popup — uses modal BEM: modal__wrapper > modal > modal__title / modal__body
+    this.renamePopup = page.locator('.modal__wrapper, .modal, [role="dialog"]').first();
+    this.renameInput = page.locator('.modal input, [role="dialog"] input').first();
+    this.renameButton = page.getByRole('button', { name: new RegExp(t('btn.rename'), 'i') });
+    this.renameError = page.locator('.modal [class*="error"], [role="dialog"] [class*="error"]').first();
 
-    // Comment popup
-    this.commentPopup = page.locator('[class*="comment-popup"], [class*="modal"]:has-text("Комментарий")');
-    this.commentInput = page.locator('textarea, [class*="comment"] input').first();
-    this.commentSaveButton = page.getByRole('button', { name: /Сохранить|Добавить/ });
+    // Comment popup — tooltip with FormReportComment (rc-tooltip)
+    this.commentPopup = page.locator('.tooltip.tooltip_light, [class*="tooltip_large"]').first()
+      .or(page.locator(`[class*="comment-popup"], [class*="modal"]:has-text("${t('btn.comment')}")`));
+    this.commentInput = page.locator('.tooltip textarea, .tooltip_light textarea, textarea').first();
+    this.commentSaveButton = page.getByRole('button', { name: new RegExp(t('btn.save'), 'i') });
 
     // Weekly comments block
-    this.weeklyCommentsBlock = page.locator('text=Комментарии за неделю').locator('..');
+    this.weeklyCommentsBlock = page.locator(`text=/${t('label.weeklyComments')}/i`).locator('..');
 
     // Error popup
-    this.errorPopup = page.locator('[class*="modal"]:has-text("Ошибка"), [role="dialog"]:has-text("Ошибка")');
-    this.errorPopupTitle = this.errorPopup.locator('[class*="title"], h2, h3').first();
-    this.errorPopupMessage = this.errorPopup.locator('[class*="body"], [class*="message"], p').first();
+    this.errorPopup = page.locator(`.modal:has-text("${t('label.error')}"), [role="dialog"]:has-text("${t('label.error')}")`);
+    this.errorPopupTitle = this.errorPopup.locator('.modal__title, h2, h3').first();
+    this.errorPopupMessage = this.errorPopup.locator('.modal__body, p').first();
   }
 
   get url() { return '/report'; }
@@ -119,19 +125,19 @@ export class ReportPage extends BasePage {
   async createTask(projectSlashTask: string) {
     await this.addTaskInput.fill(projectSlashTask);
     await this.addTaskInput.press('Enter');
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async createTaskWithHours(projectSlashTask: string, hours: string) {
     await this.addTaskInput.fill(`${projectSlashTask} ${hours}h`);
     await this.addTaskInput.press('Enter');
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async addTask(taskText: string) {
     await this.addTaskInput.fill(taskText);
     await this.addTaskInput.press('Enter');
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Task row helpers ---
@@ -141,43 +147,50 @@ export class ReportPage extends BasePage {
   }
 
   getProjectGroup(projectName: string): Locator {
-    return this.taskTable.locator(`tr:has-text("${projectName}")`).first();
+    return this.taskTable.locator(`tr:has(.task-title_project):has-text("${projectName}")`).first()
+      .or(this.taskTable.locator(`tr:has-text("${projectName}")`).first());
   }
 
   async getTaskNames(): Promise<string[]> {
-    const rows = this.taskTable.locator('tr');
-    const count = await rows.count();
+    // Task names are in span elements with class ending in __task-name
+    const taskNameSpans = this.taskTable.locator('[class$="__task-name"], .task-name__task-name');
+    const count = await taskNameSpans.count();
     const names: string[] = [];
     for (let i = 0; i < count; i++) {
-      const text = await rows.nth(i).locator('td').first().textContent();
+      const text = await taskNameSpans.nth(i).textContent();
       if (text && text.trim()) names.push(text.trim());
     }
     return names;
   }
 
   // --- Pin/unpin ---
+  // Pin button uses withInfoTooltip with text from i18n: common.style.pin_task / common.style.unpin_task
 
   getPinButton(taskName: string): Locator {
-    return this.getTaskRow(taskName).locator('[class*="pin"], [title*="Закрепить"], [title*="Открепить"], svg, img').first();
+    return this.getTaskRow(taskName).locator(`[class*="pin"], [title*="${t('tooltip.pin')}"], [title*="${t('tooltip.unpin')}"]`).first();
   }
 
   async pinTask(taskName: string) {
     const row = this.getTaskRow(taskName);
-    const pinBtn = row.locator('[title*="Закрепить"], [aria-label*="Закрепить"]').first();
+    await row.hover();
+    await this.page.waitForTimeout(200);
+    const pinBtn = row.locator(`[title*="${t('tooltip.pin')}"], [aria-label*="${t('tooltip.pin')}"]`).first();
     await pinBtn.click();
-    await this.page.waitForTimeout(300);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async unpinTask(taskName: string) {
     const row = this.getTaskRow(taskName);
-    const unpinBtn = row.locator('[title*="Открепить"], [aria-label*="Открепить"]').first();
+    await row.hover();
+    await this.page.waitForTimeout(200);
+    const unpinBtn = row.locator(`[title*="${t('tooltip.unpin')}"], [aria-label*="${t('tooltip.unpin')}"]`).first();
     await unpinBtn.click();
-    await this.page.waitForTimeout(300);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async isTaskPinned(taskName: string): Promise<boolean> {
     const row = this.getTaskRow(taskName);
-    const unpinBtn = row.locator('[title*="Открепить"], [aria-label*="Открепить"]');
+    const unpinBtn = row.locator(`[title*="${t('tooltip.unpin')}"], [aria-label*="${t('tooltip.unpin')}"]`);
     return await unpinBtn.isVisible().catch(() => false);
   }
 
@@ -198,23 +211,33 @@ export class ReportPage extends BasePage {
   getCell(taskName: string, dayIndex: number): Locator {
     // dayIndex: 0=Пн, 1=Вт, 2=Ср, 3=Чт, 4=Пт, 5=Сб, 6=Вс
     const row = this.getTaskRow(taskName);
+    // Cells with BEM class: table-task-reports__cell_weekday-effort
     // First cell is task name, then day cells start
     return row.locator('td').nth(dayIndex + 1);
   }
 
   async reportHours(taskName: string, dayIndex: number, hours: string) {
     const cell = this.getCell(taskName, dayIndex);
+    // Hover to show input, then click
+    await cell.hover();
+    await this.page.waitForTimeout(200);
     await cell.click();
     await this.page.waitForTimeout(200);
-    // The cell should become an input or the input appears
-    const input = cell.locator('input').first();
+    // The cell contains div.week-day-effort with input.week-day-effort__input
+    const input = cell.locator('input.week-day-effort__input').first()
+      .or(cell.locator('input').first());
     await input.fill(hours);
     await input.press('Tab');
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async getCellValue(taskName: string, dayIndex: number): Promise<string> {
     const cell = this.getCell(taskName, dayIndex);
+    // Value is in span.week-day-effort__value
+    const valueSpan = cell.locator('.week-day-effort__value').first();
+    if (await valueSpan.isVisible().catch(() => false)) {
+      return (await valueSpan.textContent())?.trim() || '';
+    }
     return (await cell.textContent())?.trim() || '';
   }
 
@@ -226,9 +249,11 @@ export class ReportPage extends BasePage {
 
   async getPeriodTotal(taskName: string): Promise<string> {
     const row = this.getTaskRow(taskName);
-    // "За период" is typically the 8th column (after 7 day columns)
-    const periodCell = row.locator('td').nth(8);
-    return (await periodCell.textContent())?.trim() || '0';
+    // "За период" — the effort cell after 7 weekday cells
+    // BEM: table-task-reports__cell_task-effort
+    const effortCell = row.locator('.table-task-reports__cell_task-effort, td.table-task-reports__cell_task-effort').first()
+      .or(row.locator('td').nth(8));
+    return (await effortCell.textContent())?.trim() || '0';
   }
 
   // --- Cell colors ---
@@ -245,13 +270,18 @@ export class ReportPage extends BasePage {
 
   async getCellClasses(taskName: string, dayIndex: number): Promise<string> {
     const cell = this.getCell(taskName, dayIndex);
+    // Check both the td and the inner week-day-effort div
+    const innerDiv = cell.locator('.week-day-effort').first();
+    if (await innerDiv.isVisible().catch(() => false)) {
+      return await innerDiv.evaluate(el => el.className);
+    }
     return await cell.evaluate(el => el.className);
   }
 
   // --- Header day colors (for calendar indication) ---
 
   getDayHeader(dayIndex: number): Locator {
-    const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    const dayNames = [t('day.mon'), t('day.tue'), t('day.wed'), t('day.thu'), t('day.fri'), t('day.sat'), t('day.sun')];
     return this.taskTable.locator(`th:has-text("${dayNames[dayIndex]}")`).first();
   }
 
@@ -269,8 +299,9 @@ export class ReportPage extends BasePage {
 
   async openRenamePopup(taskName: string) {
     const row = this.getTaskRow(taskName);
-    const nameCell = row.locator('td').first();
-    await nameCell.click();
+    // Task name span has onClick handler for rename
+    const nameSpan = row.locator('[class$="__task-name"], .task-name__task-name').first();
+    await nameSpan.click();
     await this.page.waitForTimeout(300);
   }
 
@@ -280,17 +311,18 @@ export class ReportPage extends BasePage {
     await this.renameInput.clear();
     await this.renameInput.fill(newName);
     await this.renameButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Comments ---
 
   getCommentIcon(taskName: string): Locator {
-    return this.getTaskRow(taskName).locator('[class*="comment"], [title*="коммент"], svg').first();
+    // Comment icon is week-day-effort__button-toggle-comment-form (IconQuoteChat)
+    return this.getTaskRow(taskName).locator('.week-day-effort__button-toggle-comment-form, [class*="comment"], [title*="коммент"]').first();
   }
 
   getTotalRowCommentIcon(): Locator {
-    return this.totalRow.locator('[class*="comment"], [title*="коммент"]').first();
+    return this.totalRow.locator('.task-effort__icon-wrapper, [class*="comment"], [title*="коммент"]').first();
   }
 
   async hoverCell(taskName: string, dayIndex: number) {
@@ -300,26 +332,32 @@ export class ReportPage extends BasePage {
   }
 
   async getTooltipText(): Promise<string> {
-    const tooltip = this.page.locator('[class*="tooltip"], [role="tooltip"]').first();
+    // rc-tooltip renders div.tooltip
+    const tooltip = this.page.locator('.tooltip, [role="tooltip"]').first();
     return (await tooltip.textContent())?.trim() || '';
   }
 
   async addComment(taskName: string, dayIndex: number, comment: string) {
+    await this.hoverCell(taskName, dayIndex);
+    // Click the comment toggle button to open the comment form tooltip
     const cell = this.getCell(taskName, dayIndex);
-    await cell.click();
+    const commentBtn = cell.locator('.week-day-effort__button-toggle-comment-form').first();
+    await commentBtn.click();
     await this.page.waitForTimeout(300);
     await this.commentInput.fill(comment);
     await this.commentSaveButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async deleteComment(taskName: string, dayIndex: number) {
+    await this.hoverCell(taskName, dayIndex);
     const cell = this.getCell(taskName, dayIndex);
-    await cell.click();
+    const commentBtn = cell.locator('.week-day-effort__button-toggle-comment-form').first();
+    await commentBtn.click();
     await this.page.waitForTimeout(300);
     await this.commentInput.clear();
     await this.commentSaveButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Alerts ---
@@ -338,7 +376,7 @@ export class ReportPage extends BasePage {
   async getTooltip(locator: Locator): Promise<string> {
     await locator.hover();
     await this.page.waitForTimeout(300);
-    const tooltip = this.page.locator('[class*="tooltip"], [role="tooltip"]').first();
+    const tooltip = this.page.locator('.tooltip, [role="tooltip"]').first();
     if (await tooltip.isVisible()) {
       return (await tooltip.textContent())?.trim() || '';
     }
@@ -348,22 +386,26 @@ export class ReportPage extends BasePage {
   // --- Sorting helpers ---
 
   async getPinnedTaskNames(): Promise<string[]> {
-    const pinnedRows = this.taskTable.locator('tr:has([title*="Открепить"])');
+    const pinnedRows = this.taskTable.locator(`tr:has([title*="${t('tooltip.unpin')}"])`);
     const count = await pinnedRows.count();
     const names: string[] = [];
     for (let i = 0; i < count; i++) {
-      const text = await pinnedRows.nth(i).locator('td').first().textContent();
+      const nameSpan = pinnedRows.nth(i).locator('[class$="__task-name"]').first();
+      const text = await nameSpan.textContent().catch(() => null)
+        || await pinnedRows.nth(i).locator('td').first().textContent();
       if (text) names.push(text.trim());
     }
     return names;
   }
 
   async getUnpinnedTaskNames(): Promise<string[]> {
-    const unpinnedRows = this.taskTable.locator('tr:has([title*="Закрепить"])');
+    const unpinnedRows = this.taskTable.locator(`tr:has([title*="${t('tooltip.pin')}"])`);
     const count = await unpinnedRows.count();
     const names: string[] = [];
     for (let i = 0; i < count; i++) {
-      const text = await unpinnedRows.nth(i).locator('td').first().textContent();
+      const nameSpan = unpinnedRows.nth(i).locator('[class$="__task-name"]').first();
+      const text = await nameSpan.textContent().catch(() => null)
+        || await unpinnedRows.nth(i).locator('td').first().textContent();
       if (text) names.push(text.trim());
     }
     return names;
@@ -373,17 +415,17 @@ export class ReportPage extends BasePage {
 
   async goToCurrentWeek() {
     await this.currentWeekButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async goToPrevWeek() {
     await this.prevWeekButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async goToNextWeek() {
     await this.nextWeekButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Table scroll helpers ---
@@ -395,8 +437,9 @@ export class ReportPage extends BasePage {
 
   async isTaskHighlighted(taskName: string): Promise<boolean> {
     const row = this.getTaskRow(taskName);
-    const classes = await row.evaluate(el => el.className);
-    return classes.includes('highlight') || classes.includes('selected') || classes.includes('active');
+    // New task highlight: div.task-name__new-task inside the row
+    const highlight = row.locator('.task-name__new-task');
+    return await highlight.isVisible().catch(() => false);
   }
 
   async isTaskInTable(taskName: string): Promise<boolean> {

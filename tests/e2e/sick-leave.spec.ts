@@ -29,7 +29,7 @@ test.describe('Мои больничные', () => {
         await expect(sickLeave.sickLeaveItems.first()).toBeVisible();
       } else {
         const emptyVisible = await sickLeave.emptyState.isVisible().catch(() => false);
-        expect(typeof emptyVisible).toBe('boolean');
+        expect(emptyVisible).toBeTruthy();
       }
     });
 
@@ -37,7 +37,7 @@ test.describe('Мои больничные', () => {
       const sickLeave = new MySickLeavePage(page);
       const createBtn = sickLeave.createButton;
       const isVisible = await createBtn.isVisible().catch(() => false);
-      expect(typeof isVisible).toBe('boolean');
+      expect(isVisible).toBeTruthy();
     });
   });
 
@@ -63,8 +63,8 @@ test.describe('Мои больничные', () => {
         if (await modal.isVisible().catch(() => false)) {
           const startVisible = await sickLeave.dateStartInput.isVisible().catch(() => false);
           const endVisible = await sickLeave.dateEndInput.isVisible().catch(() => false);
-          expect(typeof startVisible).toBe('boolean');
-          expect(typeof endVisible).toBe('boolean');
+          expect(startVisible).toBeTruthy();
+          expect(endVisible).toBeTruthy();
           await page.keyboard.press('Escape');
         }
       }
@@ -78,7 +78,7 @@ test.describe('Мои больничные', () => {
         if (await modal.isVisible().catch(() => false)) {
           const fileInput = sickLeave.fileUploadInput;
           const fileExists = await fileInput.count() > 0;
-          expect(typeof fileExists).toBe('boolean');
+          expect(fileExists).toBeTruthy();
           await page.keyboard.press('Escape');
         }
       }
@@ -95,7 +95,7 @@ test.describe('Мои больничные', () => {
         // Проверяем наличие деталей
         const statusBadge = sickLeave.statusBadge;
         const statusVisible = await statusBadge.isVisible().catch(() => false);
-        expect(typeof statusVisible).toBe('boolean');
+        expect(statusVisible).toBeTruthy();
       }
     });
 
@@ -119,7 +119,7 @@ test.describe('Мои больничные', () => {
         await sickLeave.clickSickLeave(0);
         const closeBtn = sickLeave.closeButton;
         const closeVisible = await closeBtn.isVisible().catch(() => false);
-        expect(typeof closeVisible).toBe('boolean');
+        expect(closeVisible).toBeTruthy();
       }
     });
 
@@ -130,7 +130,7 @@ test.describe('Мои больничные', () => {
         await sickLeave.clickSickLeave(0);
         const commentBtn = sickLeave.addCommentButton;
         const commentVisible = await commentBtn.isVisible().catch(() => false);
-        expect(typeof commentVisible).toBe('boolean');
+        expect(commentVisible).toBeTruthy();
       }
     });
   });

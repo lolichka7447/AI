@@ -29,15 +29,13 @@ test.describe('Производственные календари', () => {
   test('TC-ACAL-002: Выбор года доступен', async ({ authenticatedPage: page }) => {
     const calendar = new AdminCalendarPage(page);
     const yearSelector = calendar.yearSelector;
-    const isVisible = await yearSelector.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(yearSelector).toBeVisible();
   });
 
   test('TC-ACAL-003: Выбор страны/офиса доступен', async ({ authenticatedPage: page }) => {
     const calendar = new AdminCalendarPage(page);
     const countrySelector = calendar.countrySelector;
-    const isVisible = await countrySelector.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(countrySelector).toBeVisible();
   });
 
   test('TC-ACAL-004: Ячейки дней видны', async ({ authenticatedPage: page }) => {
@@ -77,31 +75,26 @@ test.describe('Экспорт', () => {
     const exportPage = new AdminExportPage(page);
     const startInput = exportPage.periodStartInput;
     const endInput = exportPage.periodEndInput;
-    const startVisible = await startInput.isVisible().catch(() => false);
-    const endVisible = await endInput.isVisible().catch(() => false);
-    expect(typeof startVisible).toBe('boolean');
-    expect(typeof endVisible).toBe('boolean');
+    await expect(startInput).toBeVisible();
+    await expect(endInput).toBeVisible();
   });
 
   test('TC-AEXP-003: Кнопка экспорта видна', async ({ authenticatedPage: page }) => {
     const exportPage = new AdminExportPage(page);
     const exportBtn = exportPage.exportButton;
-    const isVisible = await exportBtn.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(exportBtn).toBeVisible();
   });
 
   test('TC-AEXP-004: Фильтр по отделу', async ({ authenticatedPage: page }) => {
     const exportPage = new AdminExportPage(page);
     const deptFilter = exportPage.departmentFilter;
-    const isVisible = await deptFilter.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(deptFilter).toBeVisible();
   });
 
   test('TC-AEXP-005: Фильтр по проекту', async ({ authenticatedPage: page }) => {
     const exportPage = new AdminExportPage(page);
     const projectFilter = exportPage.projectFilter;
-    const isVisible = await projectFilter.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(projectFilter).toBeVisible();
   });
 });
 
@@ -124,22 +117,19 @@ test.describe('Учётная запись пользователя', () => {
   test('TC-AACC-002: Форма настроек содержит поля', async ({ authenticatedPage: page }) => {
     const account = new AccountSettingsPage(page);
     const saveBtn = account.saveButton;
-    const isVisible = await saveBtn.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(saveBtn).toBeVisible();
   });
 
   test('TC-AACC-003: Таблица трекеров видна', async ({ authenticatedPage: page }) => {
     const account = new AccountSettingsPage(page);
     const trackerTable = account.trackerTable;
-    const isVisible = await trackerTable.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(trackerTable).toBeVisible();
   });
 
   test('TC-AACC-004: Кнопка добавления трекера', async ({ authenticatedPage: page }) => {
     const account = new AccountSettingsPage(page);
     const addBtn = account.addTrackerButton;
-    const isVisible = await addBtn.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(addBtn).toBeVisible();
   });
 
   test('TC-AACC-005: Открытие формы добавления трекера', async ({ authenticatedPage: page }) => {
@@ -151,8 +141,7 @@ test.describe('Учётная запись пользователя', () => {
       const modal = account.trackerModal;
       if (await modal.isVisible().catch(() => false)) {
         const urlInput = account.trackerUrlInput;
-        const urlVisible = await urlInput.isVisible().catch(() => false);
-        expect(typeof urlVisible).toBe('boolean');
+        await expect(urlInput).toBeVisible();
         await page.keyboard.press('Escape');
       }
     }
@@ -161,21 +150,18 @@ test.describe('Учётная запись пользователя', () => {
   test('TC-AACC-006: Поиск трекера', async ({ authenticatedPage: page }) => {
     const account = new AccountSettingsPage(page);
     const searchInput = account.trackerSearchInput;
-    const isVisible = await searchInput.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(searchInput).toBeVisible();
   });
 
   test('TC-AACC-007: Настройка дня таймшита', async ({ authenticatedPage: page }) => {
     const account = new AccountSettingsPage(page);
     const timesheetInput = account.timesheetDayInput;
-    const isVisible = await timesheetInput.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(timesheetInput).toBeVisible();
   });
 
   test('TC-AACC-008: Переключатель ручного тестирования', async ({ authenticatedPage: page }) => {
     const account = new AccountSettingsPage(page);
     const toggle = account.manualTestingToggle;
-    const isVisible = await toggle.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    await expect(toggle).toBeVisible();
   });
 });

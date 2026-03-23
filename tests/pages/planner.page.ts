@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
+import { t } from '../i18n';
 
 export class PlannerPage extends BasePage {
   // Filters
@@ -29,26 +30,28 @@ export class PlannerPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    // Filters
-    this.projectFilter = page.locator('[class*="project-filter"], [class*="filter"] select').first();
-    this.employeeFilter = page.locator('[class*="employee-filter"], [placeholder*="сотрудник" i]').first();
+    // Filters — planner uses header-filter or standard filter dropdowns
+    this.projectFilter = page.locator('.header-filter select, .planner__roles-filter select, [class*="filter"] select').first();
+    this.employeeFilter = page.locator(`.react-autosuggest__input, input[placeholder*="${t('placeholder.employee')}" i]`).first();
 
-    // Task list
-    this.taskList = page.locator('[class*="task-list"], [class*="planner-board"], table').first();
-    this.taskRows = this.taskList.locator('tr, [class*="task-row"], [class*="task-card"]');
-    this.emptyState = page.locator('[class*="empty"], text=/нет задач/i').first();
+    // Task list — planner__table contains rc-table
+    this.taskList = page.locator('.planner__table table, table').first();
+    this.taskRows = this.taskList.locator('tbody tr');
+    this.emptyState = page.locator(`.approve-table__placeholder, [class*="empty"], text=${new RegExp(t('msg.noTasks'), 'i')}`).first();
 
     // Task actions
-    this.createTaskButton = page.getByRole('button', { name: /Создать|Добавить|Create/i }).first();
-    this.deleteAssignmentButton = page.getByRole('button', { name: /Удалить|Remove|Delete/i }).first();
-    this.taskDetailPanel = page.locator('[class*="task-detail"], [class*="side-panel"], [class*="drawer"]').first();
+    this.createTaskButton = page.locator(`.planner__project-group-add__button, button:has-text("${t('btn.create')}"), button:has-text("${t('btn.add')}")`).first()
+      .or(page.getByRole('button', { name: new RegExp(t('btn.create'), 'i') }).first());
+    this.deleteAssignmentButton = page.getByRole('button', { name: new RegExp(t('btn.delete'), 'i') }).first();
+    this.taskDetailPanel = page.locator('.planner__history-dialog, [class*="task-detail"], [class*="side-panel"]').first();
 
-    // Task creation form
-    this.taskNameInput = page.locator('[class*="modal"] input[type="text"], [role="dialog"] input[type="text"]').first();
-    this.taskProjectSelect = page.locator('[class*="modal"] select, [role="dialog"] [class*="project"]').first();
-    this.taskAssigneeSelect = page.locator('[class*="modal"] [class*="assignee"], [role="dialog"] [class*="assignee"]').first();
-    this.taskSaveButton = page.locator('[class*="modal"] button:has-text("Сохранить"), [role="dialog"] button:has-text("Сохранить")').first();
-    this.taskCancelButton = page.locator('[class*="modal"] button:has-text("Отмена"), [role="dialog"] button:has-text("Отмена")').first();
+    // Task creation form — uses SearchTask input and modal/tooltip
+    this.taskNameInput = page.locator('.react-autosuggest__input, .modal input[type="text"], [role="dialog"] input[type="text"]').first();
+    this.taskProjectSelect = page.locator('.modal select, [role="dialog"] select').first();
+    this.taskAssigneeSelect = page.locator('.modal [class*="assignee"], [role="dialog"] [class*="assignee"]').first();
+    this.taskSaveButton = page.locator(`.modal button:has-text("${t('btn.save')}"), [role="dialog"] button:has-text("${t('btn.save')}")`).first()
+      .or(page.getByRole('button', { name: new RegExp(t('btn.save'), 'i') }).first());
+    this.taskCancelButton = page.locator(`.modal button:has-text("${t('btn.cancel')}"), [role="dialog"] button:has-text("${t('btn.cancel')}")`).first();
 
     // Drag and drop
     this.dragHandles = page.locator('[class*="drag-handle"], [draggable="true"]');
@@ -59,15 +62,18 @@ export class PlannerPage extends BasePage {
   // --- Task helpers ---
 
   getTaskRow(taskName: string): Locator {
-    return this.taskList.locator(`tr:has-text("${taskName}"), [class*="task"]:has-text("${taskName}")`).first();
+    return this.taskList.locator(`tr:has-text("${taskName}")`).first();
   }
 
   async getTaskNames(): Promise<string[]> {
+    const nameElements = this.taskList.locator('.planner__table__task-row, [class$="__task-name"], td').first();
     const rows = this.taskRows;
     const count = await rows.count();
     const names: string[] = [];
     for (let i = 0; i < count; i++) {
-      const text = await rows.nth(i).locator('td, [class*="name"], [class*="title"]').first().textContent();
+      const row = rows.nth(i);
+      const nameEl = row.locator('.planner__table__task-row, [class*="task-name"], td').first();
+      const text = await nameEl.textContent();
       if (text && text.trim()) names.push(text.trim());
     }
     return names;
@@ -90,7 +96,7 @@ export class PlannerPage extends BasePage {
     await this.taskAssigneeSelect.click();
     await this.page.locator(`text="${employeeName}"`).click();
     await this.taskSaveButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async reassignTask(taskName: string, newEmployee: string) {
@@ -100,7 +106,7 @@ export class PlannerPage extends BasePage {
   async deleteAssignment(taskName: string) {
     await this.openTaskDetails(taskName);
     await this.deleteAssignmentButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async createTask(name: string, project?: string) {
@@ -112,20 +118,22 @@ export class PlannerPage extends BasePage {
       await this.page.locator(`text="${project}"`).click();
     }
     await this.taskSaveButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Filter helpers ---
 
   async filterByProject(projectName: string) {
-    await this.projectFilter.click();
-    await this.page.locator(`text="${projectName}"`).click();
-    await this.page.waitForTimeout(500);
+    await this.projectFilter.selectOption({ label: projectName }).catch(async () => {
+      await this.projectFilter.click();
+      await this.page.locator(`text="${projectName}"`).click();
+    });
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async filterByEmployee(employeeName: string) {
     await this.employeeFilter.fill(employeeName);
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Drag and drop ---

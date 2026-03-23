@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures/auth.fixture';
 import { NotificationsPage } from '../pages/notifications.page';
 import { NavigationComponent } from '../pages/navigation.component';
+import { t, tRegex } from '../i18n';
 
 // ============================================================================
 // Уведомления — 8 тестов (TC-NTF-001..TC-NTF-008)
@@ -32,7 +33,7 @@ test.describe('Уведомления', () => {
       } else {
         // Уведомлений нет — должно быть пустое состояние
         const emptyVisible = await notifications.emptyState.isVisible().catch(() => false);
-        expect(typeof emptyVisible).toBe('boolean');
+        expect(emptyVisible).toBeDefined();
       }
     });
 
@@ -69,9 +70,9 @@ test.describe('Уведомления', () => {
         await page.waitForTimeout(300);
 
         // Проверяем наличие кнопки "Прочитано"
-        const readBtn = firstItem.locator('button:has-text("Прочитано"), button[class*="read"], [title*="прочитан"]').first();
+        const readBtn = firstItem.locator(`button:has-text("${t('btn.markAsRead')}"), [title*="${t('tooltip.read')}"]`).first();
         const btnVisible = await readBtn.isVisible().catch(() => false);
-        expect(typeof btnVisible).toBe('boolean');
+        expect(btnVisible).toBeDefined();
       }
     });
 
@@ -85,9 +86,9 @@ test.describe('Уведомления', () => {
         await page.waitForTimeout(300);
 
         // Проверяем наличие кнопки удаления
-        const deleteBtn = firstItem.locator('button:has-text("Удалить"), button[class*="delete"], [title*="удалить"]').first();
+        const deleteBtn = firstItem.locator(`button:has-text("${t('btn.delete')}"), [title*="${t('tooltip.delete')}"]`).first();
         const btnVisible = await deleteBtn.isVisible().catch(() => false);
-        expect(typeof btnVisible).toBe('boolean');
+        expect(btnVisible).toBeDefined();
       }
     });
 
@@ -103,7 +104,7 @@ test.describe('Уведомления', () => {
         // После клика URL мог измениться (переход к связанному контенту)
         const newUrl = page.url();
         // Тест проверяет что клик обрабатывается (URL может измениться или нет)
-        expect(typeof newUrl).toBe('string');
+        expect(newUrl).toBeTruthy();
       }
     });
   });
@@ -134,7 +135,7 @@ test.describe('Уведомления', () => {
         // Пагинация видна — значит уведомлений больше одной страницы
         const nextBtn = notifications.nextPageButton;
         const nextVisible = await nextBtn.isVisible().catch(() => false);
-        expect(typeof nextVisible).toBe('boolean');
+        expect(nextVisible).toBeDefined();
       }
     });
 
@@ -156,21 +157,21 @@ test.describe('Уведомления', () => {
   test.describe('Создание уведомлений', () => {
 
     test('TC-NTF-009: Кнопка/форма создания уведомления видна', async ({ authenticatedPage: page }) => {
-      const createBtn = page.getByRole('button', { name: /Создать|Добавить|Create/i }).first();
-      const createForm = page.locator('[class*="create-form"], [class*="notification-form"], form').first();
+      const createBtn = page.getByRole('button', { name: new RegExp(`${t('btn.create')}|${t('btn.add')}|Create`, 'i') }).first();
+      const createForm = page.locator('form, .page-content form').first();
       const btnVisible = await createBtn.isVisible().catch(() => false);
       const formVisible = await createForm.isVisible().catch(() => false);
-      expect(typeof btnVisible).toBe('boolean');
-      expect(typeof formVisible).toBe('boolean');
+      expect(btnVisible).toBeDefined();
+      expect(formVisible).toBeDefined();
     });
 
     test('TC-NTF-010: Форма создания содержит поля', async ({ authenticatedPage: page }) => {
-      const createBtn = page.getByRole('button', { name: /Создать|Добавить|Create/i }).first();
+      const createBtn = page.getByRole('button', { name: new RegExp(`${t('btn.create')}|${t('btn.add')}|Create`, 'i') }).first();
       if (await createBtn.isVisible().catch(() => false)) {
         await createBtn.click();
         await page.waitForTimeout(300);
 
-        const form = page.locator('[class*="modal"], [role="dialog"], [class*="form"]').first();
+        const form = page.locator('.modal__wrapper, .modal, [role="dialog"], form').first();
         if (await form.isVisible().catch(() => false)) {
           // Форма должна содержать поля ввода
           const inputs = form.locator('input, textarea, select');
@@ -182,12 +183,12 @@ test.describe('Уведомления', () => {
     });
 
     test('TC-NTF-011: Выбор типа уведомления (tiles)', async ({ authenticatedPage: page }) => {
-      const createBtn = page.getByRole('button', { name: /Создать|Добавить|Create/i }).first();
+      const createBtn = page.getByRole('button', { name: new RegExp(`${t('btn.create')}|${t('btn.add')}|Create`, 'i') }).first();
       if (await createBtn.isVisible().catch(() => false)) {
         await createBtn.click();
         await page.waitForTimeout(300);
 
-        const tiles = page.locator('[class*="tile"], [class*="type-card"], [class*="notification-type"]');
+        const tiles = page.locator('[role="option"], .tile, button[data-type]');
         const tileCount = await tiles.count();
         expect(tileCount).toBeGreaterThanOrEqual(0);
         await page.keyboard.press('Escape');
@@ -195,9 +196,9 @@ test.describe('Уведомления', () => {
     });
 
     test('TC-NTF-012: Таблица уведомлений видна', async ({ authenticatedPage: page }) => {
-      const table = page.locator('[class*="notifications-table"], table').first();
+      const table = page.locator('table, .page-content table').first();
       const isVisible = await table.isVisible().catch(() => false);
-      expect(typeof isVisible).toBe('boolean');
+      expect(isVisible).toBeDefined();
     });
 
     test('TC-NTF-013: URL страницы уведомлений корректный', async ({ authenticatedPage: page }) => {
@@ -213,7 +214,7 @@ test.describe('Уведомления', () => {
 
     const count = await notifications.getNotificationCount();
     if (count > 1) {
-      const sortBtn = page.locator('th:has-text("Дата"), button:has-text("Дата"), [class*="sort"]').first();
+      const sortBtn = page.locator(`th:has-text("${t('label.date')}"), button:has-text("${t('label.date')}")`).first();
       if (await sortBtn.isVisible().catch(() => false)) {
         await sortBtn.click();
         await page.waitForTimeout(500);

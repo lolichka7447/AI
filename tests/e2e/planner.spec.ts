@@ -67,7 +67,7 @@ test.describe('Планировщик', () => {
           // Проверяем наличие селектора назначения
           const assigneeSelect = planner.taskAssigneeSelect;
           const assigneeVisible = await assigneeSelect.isVisible().catch(() => false);
-          expect(typeof assigneeVisible).toBe('boolean');
+          expect(assigneeVisible).toBe(true);
           await page.keyboard.press('Escape');
         }
       }
@@ -98,7 +98,7 @@ test.describe('Планировщик', () => {
         if (await detailPanel.isVisible().catch(() => false)) {
           const deleteBtn = planner.deleteAssignmentButton;
           const isVisible = await deleteBtn.isVisible().catch(() => false);
-          expect(typeof isVisible).toBe('boolean');
+          expect(isVisible).toBe(true);
           await page.keyboard.press('Escape');
         }
       }

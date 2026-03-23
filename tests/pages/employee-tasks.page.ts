@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { ReportPage } from './report.page';
+import { t } from '../i18n';
 
 /**
  * Page Object for /report/:employeeLogin — Репорт за сотрудника
@@ -29,23 +30,23 @@ export class EmployeeTasksPage extends ReportPage {
   constructor(page: Page) {
     super(page);
 
-    // Employee selector
-    this.employeeDropdown = page.locator('[class*="employee-select"], [class*="user-select"], select[class*="employee"]').first();
-    this.employeeSearchInput = page.locator('[class*="employee-search"] input, [class*="user-search"] input, input[placeholder*="сотрудник" i]').first();
-    this.employeeListItems = page.locator('[class*="employee-list"] li, [class*="user-list"] li, [class*="dropdown-item"]');
-    this.selectedEmployeeName = page.locator('[class*="selected-employee"], [class*="employee-name"], [class*="user-name"]').first();
+    // Employee selector — uses react-autosuggest or a custom dropdown
+    this.employeeDropdown = page.locator('.react-autosuggest__container, [class*="employee-select"], select').first();
+    this.employeeSearchInput = page.locator(`.react-autosuggest__input, input[placeholder*="${t('placeholder.employee')}" i]`).first();
+    this.employeeListItems = page.locator('.react-autosuggest__suggestion, [class*="dropdown-item"], [role="option"]');
+    this.selectedEmployeeName = page.locator('.navbar__user-name, .page-header__left, [class*="employee-name"]').first();
 
     // Role indicator
-    this.roleIndicator = page.locator('[class*="role"], [class*="badge"]:has-text("Менеджер"), [class*="badge"]:has-text("Руководитель"), [class*="badge"]:has-text("Админ")').first();
+    this.roleIndicator = page.locator('[class*="role"], [class*="badge"]').first();
 
     // Manager-specific
-    this.addTaskForEmployeeInput = page.locator('input[placeholder*="Мой проект"], input[placeholder*="задач" i]').first();
-    this.assignProjectSelect = page.locator('[class*="project-select"], select[class*="project"]').first();
+    this.addTaskForEmployeeInput = page.locator(`input.react-autosuggest__input, input[placeholder*="${t('placeholder.myProject')}"]`).first();
+    this.assignProjectSelect = page.locator('select').first();
 
-    // Warnings
-    this.duplicateWarning = page.locator('[class*="duplicate"], [class*="warning"]:has-text("дубликат"), [class*="error"]:has-text("уже существует")').first();
-    this.hoursValidationError = page.locator('[class*="error"]:has-text("час"), [class*="validation"]:has-text("час")').first();
-    this.maxHoursWarning = page.locator('[class*="warning"]:has-text("максимум"), [class*="warning"]:has-text("превыш")').first();
+    // Warnings — popup component
+    this.duplicateWarning = page.locator(`.popup.popup_show, [class*="warning"]:has-text("${t('msg.duplicate')}"), [class*="error"]:has-text("${t('msg.duplicate')}")`).first();
+    this.hoursValidationError = page.locator(`.popup.popup_show:has-text("${t('msg.hours')}"), [class*="error"]:has-text("${t('msg.hours')}")`).first();
+    this.maxHoursWarning = page.locator(`.popup.popup_show:has-text("${t('msg.maxExceeded')}"), [class*="warning"]:has-text("${t('msg.maxExceeded')}")`).first();
   }
 
   get url() { return '/report'; }
@@ -59,9 +60,11 @@ export class EmployeeTasksPage extends ReportPage {
       await this.employeeSearchInput.fill(employeeName);
       await this.page.waitForTimeout(300);
     }
-    const item = this.page.locator(`text="${employeeName}"`).first();
+    const item = this.page.locator('.react-autosuggest__suggestion, [class*="dropdown-item"]')
+      .filter({ hasText: employeeName }).first()
+      .or(this.page.locator(`text="${employeeName}"`).first());
     await item.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async getSelectedEmployeeName(): Promise<string> {
@@ -98,7 +101,7 @@ export class EmployeeTasksPage extends ReportPage {
   async createTaskForEmployee(projectSlashTask: string) {
     await this.addTaskForEmployeeInput.fill(projectSlashTask);
     await this.addTaskForEmployeeInput.press('Enter');
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async isDuplicateWarningVisible(): Promise<boolean> {

@@ -7,6 +7,21 @@ const BASE_URL = process.env.BASE_URL || 'https://ttt-qa-2.noveogroup.com';
 
 async function casLogin(page: Page) {
   await page.goto(BASE_URL);
+
+  // TTT login page — enter username and click LOGIN
+  const loginInput = page.locator('#username, .login-page input').first();
+  if (await loginInput.isVisible({ timeout: 5000 }).catch(() => false)) {
+    await loginInput.fill(process.env.TEST_USER_LOGIN || 'pvaynmaster');
+    const passwordField = page.locator('#password');
+    if (await passwordField.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await passwordField.fill(process.env.TEST_USER_PASSWORD || 'pvaynmaster');
+    }
+    await page.locator('button:has-text("LOGIN"), button[type="submit"]').first().click();
+    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle', { timeout: 30000 });
+  }
+
+  // If redirected to CAS, authenticate there too
   if (page.url().includes('cas')) {
     await page.locator('#username').fill(
       process.env.TEST_USER_LOGIN || 'pvaynmaster'
@@ -41,5 +56,38 @@ export const test = base.extend<AuthFixtures>({
     await use(page);
   },
 });
+
+/**
+ * Login as a specific user by username.
+ * TTT QA env uses login-only auth (no password).
+ * Use with a fresh browser context or after logout.
+ */
+export async function loginAsUser(page: Page, login: string) {
+  const baseUrl = process.env.BASE_URL || 'https://ttt-qa-2.noveogroup.com';
+  await page.goto(baseUrl);
+
+  // Wait for login form
+  const loginInput = page.locator('#username, .login-page input').first();
+  if (await loginInput.isVisible({ timeout: 5000 }).catch(() => false)) {
+    await loginInput.fill(login);
+
+    const passwordField = page.locator('#password');
+    if (await passwordField.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await passwordField.fill(login);
+    }
+
+    await page.locator('button:has-text("LOGIN"), button[type="submit"]').first().click();
+    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle', { timeout: 30000 });
+  }
+
+  // Handle CAS redirect if needed
+  if (page.url().includes('cas')) {
+    await page.locator('#username').fill(login);
+    await page.locator('#password').fill(login);
+    await page.locator('button[type="submit"], input[type="submit"]').first().click();
+    await page.waitForURL('**/report**', { timeout: 15000 });
+  }
+}
 
 export { expect };

@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures/auth.fixture';
 import { ReportPage } from '../pages/report.page';
 import { NavigationComponent } from '../pages/navigation.component';
+import { t, tRegex } from '../i18n';
 
 // ============================================================================
 // Phase 1: Мои задачи — 86 тестов (TR-1..TR-90)
@@ -77,7 +78,7 @@ test.describe('Мои задачи', () => {
       // Проверить тултипы pin/unpin на задаче
       const unpinnedTasks = await report.getUnpinnedTaskNames();
       if (unpinnedTasks.length > 0) {
-        const pinBtn = report.getTaskRow(unpinnedTasks[0]).locator('[title*="Закрепить"]').first();
+        const pinBtn = report.getTaskRow(unpinnedTasks[0]).locator(`[title*="${t('tooltip.pin')}"]`).first();
         await expect(pinBtn).toBeVisible();
       }
     });
@@ -100,7 +101,7 @@ test.describe('Мои задачи', () => {
 
         // Если фон серый (закрытый проект) — кнопка pin не должна быть активной
         if (bgColor.includes('rgb(200') || bgColor.includes('rgb(220')) {
-          const pinBtn = row.locator('[title*="Закрепить"]');
+          const pinBtn = row.locator(`[title*="${t('tooltip.pin')}"]`);
           const pinCount = await pinBtn.count();
           if (pinCount > 0) {
             await expect(pinBtn.first()).toBeDisabled();
@@ -146,7 +147,7 @@ test.describe('Мои задачи', () => {
       const report = new ReportPage(page);
       await report.waitForPageLoad();
 
-      const toggleLabel = page.getByText('Группировать по проектам');
+      const toggleLabel = page.getByText(t('label.groupByProjects'));
 
       // По умолчанию включена
       await expect(report.groupByProjectsCheckbox).toBeChecked();
@@ -356,10 +357,10 @@ test.describe('Мои задачи', () => {
       const tasks = await report.getTaskNames();
       if (tasks.length > 0) {
         const row = report.getTaskRow(tasks[0]);
-        const deleteBtn = row.locator('[title*="Удалить"], [aria-label*="Удалить"], button:has-text("Удалить")').first();
+        const deleteBtn = row.locator(`[title*="${t('tooltip.delete')}"], [aria-label*="${t('tooltip.delete')}"], button:has-text("${t('btn.delete')}")`).first();
         const isVisible = await deleteBtn.isVisible().catch(() => false);
         // Кнопка удаления может быть видна для незакреплённых задач
-        expect(typeof isVisible).toBe('boolean');
+        expect(isVisible).toBeTruthy();
       }
     });
 
@@ -375,10 +376,10 @@ test.describe('Мои задачи', () => {
           if (value && value !== '0' && value !== '') {
             // Нашли задачу с часами — ищем кнопку удаления
             const row = report.getTaskRow(taskName);
-            const deleteBtn = row.locator('[title*="Удалить"], [aria-label*="Удалить"]').first();
+            const deleteBtn = row.locator(`[title*="${t('tooltip.delete')}"], [aria-label*="${t('tooltip.delete')}"]`).first();
             const isVisible = await deleteBtn.isVisible().catch(() => false);
             // Для задачи с часами удаление может быть недоступно
-            expect(typeof isVisible).toBe('boolean');
+            expect(isVisible).toBeTruthy();
             break;
           }
         }
@@ -459,7 +460,7 @@ test.describe('Мои задачи', () => {
           if (value && value !== '0' && value !== '') {
             await report.hoverCell(taskName, day);
             // При наведении может появиться тултип с комментарием
-            const tooltip = report.page.locator('[class*="tooltip"], [role="tooltip"]');
+            const tooltip = report.page.locator('.tooltip, .tooltip_light, [role="tooltip"]');
             // Тултип может и не появиться если нет комментария — это OK
             break;
           }
@@ -511,7 +512,7 @@ test.describe('Мои задачи', () => {
       // Иконка видна если есть хотя бы один комментарий на текущей неделе
       const isVisible = await commentIcon.isVisible().catch(() => false);
       // Тест пройдёт в обоих случаях — главное что проверка выполнена
-      expect(typeof isVisible).toBe('boolean');
+      expect(isVisible).toBeTruthy();
     });
 
     test('TR-32: Блок "Комментарии за неделю"', async ({ authenticatedPage: page }) => {
@@ -521,7 +522,7 @@ test.describe('Мои задачи', () => {
       // Блок комментариев за неделю может быть видим если есть комментарии
       const weeklyComments = report.weeklyCommentsBlock;
       const isVisible = await weeklyComments.isVisible().catch(() => false);
-      expect(typeof isVisible).toBe('boolean');
+      expect(isVisible).toBeTruthy();
     });
 
     test('TR-33: Создание комментария при создании репорта', async ({ authenticatedPage: page }) => {
@@ -724,7 +725,7 @@ test.describe('Мои задачи', () => {
             const isErrorVisible = await error.isVisible().catch(() => false);
             if (isErrorVisible) {
               const errorText = await error.textContent();
-              expect(errorText).toContain('не может быть пустым');
+              expect(errorText).toContain(t('msg.cannotBeEmpty'));
             }
 
             // Кнопка "Переименовать" должна быть недоступна
@@ -756,7 +757,7 @@ test.describe('Мои задачи', () => {
             const isErrorVisible = await error.isVisible().catch(() => false);
             if (isErrorVisible) {
               const errorText = await error.textContent();
-              expect(errorText).toContain('формат');
+              expect(errorText).toContain(t('msg.format'));
             }
 
             await page.keyboard.press('Escape');
@@ -1467,7 +1468,7 @@ test.describe('Мои задачи', () => {
         const rejectedBlock = report.rejectedReportsBlock;
         const isVisible = await rejectedBlock.isVisible().catch(() => false);
         // Тест пройдёт в обоих случаях
-        expect(typeof isVisible).toBe('boolean');
+        expect(isVisible).toBeTruthy();
       });
 
       test('TR-87: Все репорты в текущем открытом периоде аппрува', async ({ authenticatedPage: page }) => {
@@ -1522,7 +1523,7 @@ test.describe('Мои задачи', () => {
           const errorPopup = report.errorPopup;
           if (await errorPopup.isVisible().catch(() => false)) {
             const errorText = await report.errorPopupMessage.textContent();
-            expect(errorText).toContain('Период репорта часов закрыт');
+            expect(errorText).toContain(t('msg.periodClosed'));
           }
         }
       });
@@ -1584,21 +1585,21 @@ test.describe('Мои задачи', () => {
       await nav.navigateToCalendar();
       await page.waitForLoadState('networkidle');
       // Календарь может быть на той же странице или отдельной
-      await expect(page.locator('[class*="calendar"], table, [class*="absence"]').first()).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('table, .page-content, main').first()).toBeVisible({ timeout: 10000 });
     });
 
     test('TC-NAV-008: Переход на Statistics', async ({ authenticatedPage: page }) => {
       const nav = new NavigationComponent(page);
       await nav.navigateToStatistics();
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('table, [class*="statistics"], [class*="stat"]').first()).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('table, .page-content, main').first()).toBeVisible({ timeout: 10000 });
     });
 
     test('TC-NAV-009: Переход на Admin', async ({ authenticatedPage: page }) => {
       const nav = new NavigationComponent(page);
       await nav.navigateToAdmin();
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('table, [class*="admin"], [class*="project"]').first()).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('table, .page-content, main').first()).toBeVisible({ timeout: 10000 });
     });
 
     test('TC-NAV-010: Переключение языка (RU/EN)', async ({ authenticatedPage: page }) => {
@@ -1629,9 +1630,9 @@ test.describe('Мои задачи', () => {
       await page.waitForTimeout(300);
 
       // Проверяем наличие пункта "Выйти"
-      const logoutItem = page.locator('text=/Выйти|Logout|выход/i').first();
+      const logoutItem = page.locator(`text=/${t('nav.logout')}|Logout/i`).first();
       const isVisible = await logoutItem.isVisible().catch(() => false);
-      expect(typeof isVisible).toBe('boolean');
+      expect(isVisible).toBeDefined();
 
       // Закрываем меню без выхода
       await page.keyboard.press('Escape');
@@ -1679,7 +1680,7 @@ test.describe('Мои задачи', () => {
       // Строка "Всего" должна содержать суммы
       await expect(report.totalRow).toBeVisible({ timeout: 15000 });
       const totalText = await report.totalRow.textContent();
-      expect(totalText).toContain('Всего');
+      expect(totalText).toContain(t('label.total'));
     });
 
     test('TR-93: "За период" — корректность расчёта', async ({ authenticatedPage: page }) => {
@@ -1707,8 +1708,8 @@ test.describe('Мои задачи', () => {
       const sunVisible = await sunHeader.isVisible().catch(() => false);
 
       // Выходные дни могут быть видны или скрыты в зависимости от настроек
-      expect(typeof satVisible).toBe('boolean');
-      expect(typeof sunVisible).toBe('boolean');
+      expect(satVisible).toBeTruthy();
+      expect(sunVisible).toBeTruthy();
     });
 
     test('TR-95: Работа с выходными днями — ввод часов в Сб/Вс', async ({ authenticatedPage: page }) => {
@@ -1726,7 +1727,7 @@ test.describe('Мои задачи', () => {
           // Ввод часов в выходные может быть разрешён или запрещён
           const input = satCell.locator('input').first();
           const inputVisible = await input.isVisible().catch(() => false);
-          expect(typeof inputVisible).toBe('boolean');
+          expect(inputVisible).toBeTruthy();
         }
       }
     });

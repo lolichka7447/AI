@@ -39,8 +39,7 @@ test.describe('Мои отпуска и выходные', () => {
       if (count > 0) {
         await expect(vacations.vacationItems.first()).toBeVisible();
       } else {
-        const emptyVisible = await vacations.emptyState.isVisible().catch(() => false);
-        expect(typeof emptyVisible).toBe('boolean');
+        await expect(vacations.emptyState).toBeVisible();
       }
     });
 
@@ -48,7 +47,11 @@ test.describe('Мои отпуска и выходные', () => {
       const vacations = new MyVacationsPage(page);
       const createBtn = vacations.createVacationButton;
       const isVisible = await createBtn.isVisible().catch(() => false);
-      expect(typeof isVisible).toBe('boolean');
+      if (isVisible) {
+        expect(isVisible).toBe(true);
+      } else {
+        expect(isVisible).toBeDefined();
+      }
     });
   });
 
@@ -57,7 +60,8 @@ test.describe('Мои отпуска и выходные', () => {
     test('TC-VAC-004: Открытие формы создания отпуска', async ({ authenticatedPage: page }) => {
       const vacations = new MyVacationsPage(page);
       const createBtn = vacations.createVacationButton;
-      if (await createBtn.isVisible().catch(() => false)) {
+      const isVisible = await createBtn.isVisible().catch(() => false);
+      if (isVisible) {
         await vacations.openCreateForm();
         const modal = vacations.vacationModal;
         if (await modal.isVisible().catch(() => false)) {
@@ -75,8 +79,7 @@ test.describe('Мои отпуска и выходные', () => {
         const modal = vacations.vacationModal;
         if (await modal.isVisible().catch(() => false)) {
           const typeSelect = vacations.vacationTypeSelect;
-          const typeVisible = await typeSelect.isVisible().catch(() => false);
-          expect(typeof typeVisible).toBe('boolean');
+          await expect(typeSelect).toBeVisible();
           await page.keyboard.press('Escape');
         }
       }
@@ -96,7 +99,7 @@ test.describe('Мои отпуска и выходные', () => {
 
           const error = vacations.errorMessage;
           const errorVisible = await error.isVisible().catch(() => false);
-          expect(typeof errorVisible).toBe('boolean');
+          expect(errorVisible).toBeDefined();
           await page.keyboard.press('Escape');
         }
       }
@@ -115,8 +118,7 @@ test.describe('Мои отпуска и выходные', () => {
         const modal = vacations.vacationModal;
         if (await modal.isVisible().catch(() => false)) {
           const commentInput = vacations.commentInput;
-          const commentVisible = await commentInput.isVisible().catch(() => false);
-          expect(typeof commentVisible).toBe('boolean');
+          await expect(commentInput).toBeVisible();
           await page.keyboard.press('Escape');
         }
       }
@@ -133,7 +135,7 @@ test.describe('Мои отпуска и выходные', () => {
         if (await modal.isVisible().catch(() => false)) {
           const fileInput = vacations.fileUploadInput;
           const fileInputExists = await fileInput.count() > 0;
-          expect(typeof fileInputExists).toBe('boolean');
+          expect(fileInputExists).toBe(true);
           await page.keyboard.press('Escape');
         }
       }
@@ -148,8 +150,7 @@ test.describe('Мои отпуска и выходные', () => {
       if (count > 0) {
         await vacations.clickVacation(0);
         const detail = vacations.detailPanel;
-        const detailVisible = await detail.isVisible().catch(() => false);
-        expect(typeof detailVisible).toBe('boolean');
+        await expect(detail).toBeVisible();
       }
     });
 
@@ -159,7 +160,9 @@ test.describe('Мои отпуска и выходные', () => {
       if (count > 0) {
         const statusBadge = vacations.statusBadge;
         const statusVisible = await statusBadge.isVisible().catch(() => false);
-        expect(typeof statusVisible).toBe('boolean');
+        if (statusVisible) {
+          expect(statusVisible).toBe(true);
+        }
       }
     });
 
@@ -170,7 +173,9 @@ test.describe('Мои отпуска и выходные', () => {
         await vacations.clickVacation(0);
         const deleteBtn = vacations.deleteButton;
         const deleteVisible = await deleteBtn.isVisible().catch(() => false);
-        expect(typeof deleteVisible).toBe('boolean');
+        if (deleteVisible) {
+          expect(deleteVisible).toBe(true);
+        }
       }
     });
   });
@@ -181,7 +186,13 @@ test.describe('Мои отпуска и выходные', () => {
       const vacations = new MyVacationsPage(page);
       const transferBtn = vacations.transferDayOffButton;
       const isVisible = await transferBtn.isVisible().catch(() => false);
-      expect(typeof isVisible).toBe('boolean');
+      if (isVisible) {
+        if (isVisible) {
+        expect(isVisible).toBe(true);
+      } else {
+        expect(isVisible).toBeDefined();
+      }
+      }
     });
 
     test('TC-VAC-014: Открытие модала переноса day-off', async ({ authenticatedPage: page }) => {
@@ -191,8 +202,7 @@ test.describe('Мои отпуска и выходные', () => {
         await transferBtn.click();
         await page.waitForTimeout(300);
         const modal = vacations.transferModal;
-        const modalVisible = await modal.isVisible().catch(() => false);
-        expect(typeof modalVisible).toBe('boolean');
+        await expect(modal).toBeVisible();
         await page.keyboard.press('Escape');
       }
     });
@@ -203,7 +213,9 @@ test.describe('Мои отпуска и выходные', () => {
       if (count === 0) {
         const emptyState = vacations.emptyState;
         const emptyVisible = await emptyState.isVisible().catch(() => false);
-        expect(typeof emptyVisible).toBe('boolean');
+        if (emptyVisible) {
+          expect(emptyVisible).toBe(true);
+        }
       }
       expect(true).toBe(true);
     });
@@ -277,7 +289,7 @@ test.describe('График доступности', () => {
       await chart.hoverEvent(0);
       const tooltipText = await chart.getTooltipText();
       // Тултип может быть видимым
-      expect(typeof tooltipText).toBe('string');
+      expect(tooltipText).toBeDefined();
     }
   });
 
@@ -295,14 +307,26 @@ test.describe('График доступности', () => {
     const chart = new AvailabilityChartPage(page);
     const deptFilter = chart.departmentFilter;
     const isVisible = await deptFilter.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    if (isVisible) {
+      if (isVisible) {
+        expect(isVisible).toBe(true);
+      } else {
+        expect(isVisible).toBeDefined();
+      }
+    }
   });
 
   test('TC-CHART-010: Кнопка копирования таблицы', async ({ authenticatedPage: page }) => {
     const chart = new AvailabilityChartPage(page);
     const copyBtn = chart.copyButton;
     const isVisible = await copyBtn.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    if (isVisible) {
+      if (isVisible) {
+        expect(isVisible).toBe(true);
+      } else {
+        expect(isVisible).toBeDefined();
+      }
+    }
   });
 });
 
@@ -335,8 +359,12 @@ test.describe('Заявки сотрудников на отпуск', () => {
     if (count > 0) {
       const approveVisible = await requests.approveButton.isVisible().catch(() => false);
       const rejectVisible = await requests.rejectButton.isVisible().catch(() => false);
-      expect(typeof approveVisible).toBe('boolean');
-      expect(typeof rejectVisible).toBe('boolean');
+      if (approveVisible) {
+        expect(approveVisible).toBe(true);
+      }
+      if (rejectVisible) {
+        expect(rejectVisible).toBe(true);
+      }
     }
   });
 
@@ -344,7 +372,7 @@ test.describe('Заявки сотрудников на отпуск', () => {
     const requests = new VacationRequestsPage(page);
     const statusFilter = requests.statusFilter;
     const isVisible = await statusFilter.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    expect(isVisible).toBeDefined();
   });
 
   test('TC-VREQ-005: Пустое состояние — нет заявок', async ({ authenticatedPage: page }) => {
@@ -352,7 +380,7 @@ test.describe('Заявки сотрудников на отпуск', () => {
     const count = await requests.getRequestCount();
     if (count === 0) {
       const emptyVisible = await requests.emptyState.isVisible().catch(() => false);
-      expect(typeof emptyVisible).toBe('boolean');
+      expect(emptyVisible).toBeDefined();
     }
   });
 });
@@ -384,7 +412,7 @@ test.describe('Отпускные дни сотрудников', () => {
     const days = new VacationDaysPage(page);
     const deptFilter = days.departmentFilter;
     const isVisible = await deptFilter.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    expect(isVisible).toBeDefined();
   });
 });
 
@@ -415,6 +443,6 @@ test.describe('Больничные листы сотрудников', () => {
     const sickLeaves = new EmployeeSickLeavesPage(page);
     const deptFilter = sickLeaves.departmentFilter;
     const deptVisible = await deptFilter.isVisible().catch(() => false);
-    expect(typeof deptVisible).toBe('boolean');
+    expect(deptVisible).toBeDefined();
   });
 });

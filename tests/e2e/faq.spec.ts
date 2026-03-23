@@ -20,7 +20,7 @@ test.describe('FAQ', () => {
   });
 
   test('TC-FAQ-002: Содержимое FAQ не пустое', async ({ authenticatedPage: page }) => {
-    const mainContent = page.locator('main, [class*="content"], [class*="faq"]').first();
+    const mainContent = page.locator('main, .page-content, body').first();
     const isVisible = await mainContent.isVisible().catch(() => false);
     if (isVisible) {
       const text = await mainContent.textContent();
@@ -32,6 +32,6 @@ test.describe('FAQ', () => {
     // Навигация header видна на FAQ
     const logo = page.getByRole('button', { name: 'Новео ТТТ' });
     const logoVisible = await logo.isVisible().catch(() => false);
-    expect(typeof logoVisible).toBe('boolean');
+    expect(logoVisible).toBe(true);
   });
 });

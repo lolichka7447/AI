@@ -1,8 +1,9 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
+import { t } from '../i18n';
 
 /**
- * Page Object for /admin/salary — Заработная плата
+ * Page Object for /accounting/salary — Заработная плата
  */
 export class SalaryPage extends BasePage {
   readonly dataTable: Locator;
@@ -17,14 +18,14 @@ export class SalaryPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.dataTable = page.locator('table').first();
+    this.dataTable = page.locator('table:visible').first();
     this.dataRows = this.dataTable.locator('tbody tr');
     this.periodFilter = page.locator('[class*="period"], [class*="date-range"], select[class*="period"]').first();
-    this.departmentFilter = page.locator('[class*="department-filter"], select:has-text("Отдел")').first();
-    this.searchInput = page.locator('input[placeholder*="Поиск" i], input[class*="search"]').first();
-    this.totalRow = this.dataTable.locator('tr:has-text("Итого"), tfoot tr').last();
-    this.emptyState = page.locator('[class*="empty"], text=/нет данных/i').first();
-    this.exportButton = page.getByRole('button', { name: /Экспорт|Export|Скачать/i }).first();
+    this.departmentFilter = page.locator(`[class*="department-filter"], select:has-text("${t('filter.department')}")`).first();
+    this.searchInput = page.locator(`input[placeholder*="${t('placeholder.search')}" i], input[class*="search"]`).first();
+    this.totalRow = this.dataTable.locator(`tr:has-text("${t('label.totalAlt')}"), tfoot tr`).last();
+    this.emptyState = page.locator(`[class*="empty"], text=/${t('msg.noData')}/i`).first();
+    this.exportButton = page.getByRole('button', { name: new RegExp(t('btn.export'), 'i') }).first();
   }
 
   get url() { return '/admin/salary'; }
@@ -35,7 +36,7 @@ export class SalaryPage extends BasePage {
 }
 
 /**
- * Page Object for /admin/offices — Изменение периодов
+ * Page Object for /accounting/periods — Изменение периодов
  */
 export class PeriodsPage extends BasePage {
   readonly officeTabs: Locator;
@@ -50,9 +51,9 @@ export class PeriodsPage extends BasePage {
 
     this.officeTabs = page.locator('[class*="tabs"], [role="tablist"]').first();
     this.periodForm = page.locator('[class*="period-form"], form, [class*="modal"]').first();
-    this.periodTable = page.locator('table').first();
+    this.periodTable = page.locator('table:visible').first();
     this.periodRows = this.periodTable.locator('tbody tr');
-    this.saveButton = page.getByRole('button', { name: /Сохранить|Save/i }).first();
+    this.saveButton = page.getByRole('button', { name: new RegExp(t('btn.save'), 'i') }).first();
     this.officeSelect = page.locator('select[class*="office"], [class*="office-select"]').first();
   }
 
@@ -77,12 +78,12 @@ export class AccountingSickLeavesPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.dataTable = page.locator('table').first();
+    this.dataTable = page.locator('table:visible').first();
     this.dataRows = this.dataTable.locator('tbody tr');
     this.periodFilter = page.locator('[class*="period"], select[class*="period"]').first();
-    this.departmentFilter = page.locator('[class*="department-filter"], select:has-text("Отдел")').first();
-    this.statusFilter = page.locator('[class*="status-filter"], select:has-text("Статус")').first();
-    this.emptyState = page.locator('[class*="empty"], text=/нет данных/i').first();
+    this.departmentFilter = page.locator(`[class*="department-filter"], select:has-text("${t('filter.department')}")`).first();
+    this.statusFilter = page.locator(`[class*="status-filter"], select:has-text("${t('filter.status')}")`).first();
+    this.emptyState = page.locator(`[class*="empty"], text=/${t('msg.noData')}/i`).first();
   }
 
   get url() { return '/accounting/sick-leaves'; }

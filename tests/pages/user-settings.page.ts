@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
+import { t } from '../i18n';
 
 /**
  * Page Object for /admin/account — Настройки пользователя
@@ -53,50 +54,50 @@ export class UserSettingsPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    // Tabs
-    this.generalTab = page.locator('a:has-text("Общие"), button:has-text("Общие"), [class*="tab"]:has-text("Общие")').first();
-    this.trackersTab = page.locator('a:has-text("Трекеры"), button:has-text("Трекеры"), [class*="tab"]:has-text("Трекеры")').first();
-    this.exportTab = page.locator('a:has-text("Экспорт"), button:has-text("Экспорт"), [class*="tab"]:has-text("Экспорт")').first();
+    // Tabs — account page uses simple button tabs (not .main-tabs__item)
+    this.generalTab = page.getByRole('button', { name: new RegExp(t('tab.general'), 'i') }).first();
+    this.trackersTab = page.getByRole('button', { name: new RegExp(t('tab.trackers'), 'i') }).first();
+    this.exportTab = page.getByRole('button', { name: new RegExp(t('tab.export'), 'i') }).first();
 
-    // General
-    this.profileSection = page.locator('[class*="profile"], [class*="general"], form').first();
-    this.nameInput = page.locator('input[name*="name"], input[placeholder*="имя" i]').first();
+    // General — page content area after the header
+    this.profileSection = page.locator('.page-body, .page-body__tabs, main').first();
+    this.nameInput = page.getByRole('spinbutton').first();
     this.emailInput = page.locator('input[name*="email"], input[type="email"]').first();
-    this.languageSelect = page.locator('select[name*="lang"], [class*="language-select"]').first();
-    this.saveProfileButton = page.getByRole('button', { name: /Сохранить|Save/i }).first();
+    this.languageSelect = page.locator('.language-switcher, select[name*="lang"]').first();
+    this.saveProfileButton = page.getByRole('button', { name: /Сохранить настройки|Сохранить/i }).first();
 
-    // Token
-    this.tokenSection = page.locator('[class*="token"], [class*="api-key"]').first();
-    this.currentToken = page.locator('[class*="token-value"], code, [class*="api-key-value"]').first();
-    this.generateTokenButton = page.getByRole('button', { name: /Сгенерировать|Generate|Создать токен/i }).first();
-    this.copyTokenButton = page.getByRole('button', { name: /Копировать|Copy/i }).first();
-    this.revokeTokenButton = page.getByRole('button', { name: /Отозвать|Revoke|Удалить токен/i }).first();
-    this.tokenInput = page.locator('input[class*="token"], input[readonly]').first();
+    // Token — "Ваш секретный API Token" section uses <dt>/<dd> (term/definition)
+    this.tokenSection = page.locator('dt, text=/секретн|token|токен/i').first();
+    this.currentToken = page.locator('dd').first();
+    this.generateTokenButton = this.currentToken.locator('button').first();
+    this.copyTokenButton = this.currentToken.locator('button').first();
+    this.revokeTokenButton = this.currentToken.locator('button').nth(1);
+    this.tokenInput = page.locator('dd, input[readonly], input[class*="token"]').first();
 
     // Trackers
     this.trackerList = page.locator('[class*="tracker-list"], table').first();
     this.trackerRows = this.trackerList.locator('tbody tr, [class*="tracker-row"]');
-    this.addTrackerButton = page.getByRole('button', { name: /Добавить трекер|Add tracker/i }).first();
-    this.trackerNameInput = page.locator('[class*="modal"] input[name*="name"], [role="dialog"] input').first();
-    this.trackerUrlInput = page.locator('[class*="modal"] input[name*="url"], [class*="modal"] input[placeholder*="URL"]').first();
-    this.trackerTokenInput = page.locator('[class*="modal"] input[name*="token"], [class*="modal"] input[placeholder*="токен" i]').first();
-    this.trackerProjectSelect = page.locator('[class*="modal"] select, [class*="modal"] [class*="project-select"]').first();
-    this.saveTrackerButton = page.locator('[class*="modal"] button:has-text("Сохранить"), [role="dialog"] button:has-text("Сохранить")').first();
-    this.deleteTrackerButton = page.locator('button:has-text("Удалить"), button[class*="delete-tracker"]').first();
-    this.trackerFormModal = page.locator('[class*="modal"], [role="dialog"]').first();
+    this.addTrackerButton = page.getByRole('button', { name: new RegExp(t('btn.addTracker'), 'i') }).first();
+    this.trackerNameInput = page.locator('.modal input[name*="name"], .modal input, [role="dialog"] input').first();
+    this.trackerUrlInput = page.locator('.modal input[name*="url"], .modal input[placeholder*="URL"]').first();
+    this.trackerTokenInput = page.locator(`.modal input[name*="token"], .modal input[placeholder*="${t('placeholder.token')}" i]`).first();
+    this.trackerProjectSelect = page.locator('.modal select').first();
+    this.saveTrackerButton = page.locator(`.modal button:has-text("${t('btn.save')}"), [role="dialog"] button:has-text("${t('btn.save')}")`).first();
+    this.deleteTrackerButton = page.locator(`button:has-text("${t('btn.delete')}"), button[class*="delete-tracker"]`).first();
+    this.trackerFormModal = page.locator('.modal__wrapper, .modal, [role="dialog"]').first();
 
     // Export
     this.exportSection = page.locator('[class*="export"], [class*="download"]').first();
     this.exportFormatSelect = page.locator('select[class*="format"], [class*="export-format"]').first();
     this.exportPeriodStart = page.locator('[class*="export"] input[type="date"], [class*="export"] input[class*="start"]').first();
     this.exportPeriodEnd = page.locator('[class*="export"] input[type="date"], [class*="export"] input[class*="end"]').last();
-    this.exportButton = page.getByRole('button', { name: /Экспорт|Export|Скачать|Download/i }).first();
-    this.downloadLink = page.locator('a[download], a:has-text("Скачать")').first();
+    this.exportButton = page.getByRole('button', { name: new RegExp(t('btn.export'), 'i') }).first();
+    this.downloadLink = page.locator(`a[download], a:has-text("${t('btn.download')}")`).first();
 
     // Common
-    this.alertContainer = page.locator('[class*="alert"], [class*="toast"], [role="alert"]').first();
-    this.confirmDialog = page.locator('[class*="confirm"], [role="alertdialog"]').first();
-    this.confirmYesButton = this.confirmDialog.locator('button:has-text("Да"), button:has-text("OK")').first();
+    this.alertContainer = page.locator('.popup.popup_show, [role="alert"], .rc-notification').first();
+    this.confirmDialog = page.locator(`.modal:has-text("${t('btn.confirm')}"), [role="alertdialog"]`).first();
+    this.confirmYesButton = this.confirmDialog.locator(`button:has-text("${t('btn.yes')}"), button:has-text("${t('btn.ok')}")`).first();
   }
 
   get url() { return '/admin/account'; }
@@ -140,7 +141,7 @@ export class UserSettingsPage extends BasePage {
 
   async deleteTracker(trackerName: string) {
     const row = this.getTrackerRow(trackerName);
-    const deleteBtn = row.locator('button:has-text("Удалить"), button[class*="delete"]').first();
+    const deleteBtn = row.locator(`button:has-text("${t('btn.delete')}"), button[class*="delete"]`).first();
     await deleteBtn.click();
     await this.page.waitForTimeout(300);
     if (await this.confirmYesButton.isVisible().catch(() => false)) {

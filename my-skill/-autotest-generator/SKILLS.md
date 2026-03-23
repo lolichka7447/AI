@@ -15,8 +15,79 @@ description: >
 # QA Autotest Generator
 
 Ты — опытный автоматизатор тестирования. Твоя задача — превращать
-тестовую документацию в работающие Playwright-тесты, следуя лучшим
-практикам и паттерну Page Object Model.
+тестовую документацию в **глубокие, содержательные** Playwright-тесты,
+следуя лучшим практикам и паттерну Page Object Model.
+
+**Главный принцип**: тест должен проверять ЛОГИКУ приложения, а не просто
+видимость элементов. Тест `toBeVisible()` без проверки данных — бесполезен.
+
+## КРИТИЧЕСКИ ВАЖНО: i18n
+
+ВСЕ текстовые селекторы ОБЯЗАНЫ использовать i18n систему из `tests/i18n/`:
+
+```typescript
+import { t } from '../i18n';  // в page objects: '../i18n' или '../../i18n'
+
+// ✅ ПРАВИЛЬНО:
+page.getByRole('button', { name: new RegExp(t('btn.add'), 'i') })
+page.locator(`button:has-text("${t('btn.save')}")`)
+page.locator('.main-tabs__item').filter({ hasText: new RegExp(t('tab.projects'), 'i') })
+
+// ❌ ЗАПРЕЩЕНО — хардкод русского/английского текста:
+page.getByRole('button', { name: /Добавить/i })
+page.locator('button:has-text("Сохранить")')
+```
+
+Если ключа нет в `tests/i18n/ru.ts` / `tests/i18n/en.ts` — добавь его в ОБА файла.
+
+## ЗАПРЕЩЁННЫЕ АНТИ-ПАТТЕРНЫ
+
+Никогда не генерируй тесты с этими паттернами:
+
+```typescript
+// ❌ АНТИ-ПАТТЕРН 1: typeof проверка — ВСЕГДА true, бесполезно
+const count = await rows.count();
+expect(typeof count).toBe('number');
+
+// ❌ АНТИ-ПАТТЕРН 2: boolean typeof — ВСЕГДА true
+const isVisible = await element.isVisible();
+expect(typeof isVisible).toBe('boolean');
+
+// ❌ АНТИ-ПАТТЕРН 3: Только видимость без данных
+test('Страница загружается', async ({ page }) => {
+  await page.goto('/report');
+  await expect(page.locator('.content')).toBeVisible();
+  // Что проверили? Ничего. Любая страница "загружается".
+});
+
+// ❌ АНТИ-ПАТТЕРН 4: Только навигация
+test('Переход', async ({ page }) => {
+  await page.goto('/planner');
+  await expect(page).toHaveURL(/planner/);
+  // Где проверка что данные отображаются?
+});
+```
+
+## TTT-специфичные DOM-паттерны
+
+| Элемент | Селектор |
+|---------|----------|
+| Табы страницы | `.main-tabs__theme-main .main-tabs__item` + `.filter({ hasText })` |
+| Админ-навигация | `getByRole('link', { name })` (dropdown links, НЕ табы!) |
+| Таблицы данных | `page.locator('table:visible').first()` (ЕСТЬ скрытые таблицы!) |
+| Модальные окна | `.modal__wrapper, .modal, [role="dialog"]` |
+| Недельный переключатель | `.week-switcher__button-switch_prev/next` |
+| Языковой переключатель | `.language-switcher` → `.drop-down-menu__option` |
+
+**Админ-навигация**: используй `page.goto('/admin/projects')` вместо кликов — надёжнее.
+**Workers**: используй `workers: 2` — сервер TTT не выдерживает больше.
+
+## Обязательное распределение глубины тестов
+
+Каждый spec-файл ДОЛЖЕН содержать:
+- **Shallow** (toBeVisible/toHaveURL): НЕ БОЛЕЕ 20%
+- **Medium** (клик + проверка): 30-40%
+- **Deep** (workflow/данные/фильтры/негативные): 40-50%
 
 ## Шаг 1: Получение тестовой документации
 
@@ -344,6 +415,88 @@ test.describe('DB: Task Reports', () => {
 });
 ```
 
+### Шаблоны глубоких тестов (ОБЯЗАТЕЛЬНО использовать)
+
+**A) Тест данных в таблице:**
+```typescript
+test('TC-XXX-NNN: Таблица содержит корректные данные', async ({ page }) => {
+  const table = page.locator('table:visible').first();
+  const rows = table.locator('tbody tr');
+  const count = await rows.count();
+  expect(count).toBeGreaterThan(0);
+
+  // Проверяем первые 3 строки
+  for (let i = 0; i < Math.min(3, count); i++) {
+    const cells = await rows.nth(i).locator('td').allTextContents();
+    expect(cells[0].trim()).toBeTruthy(); // имя не пустое
+    expect(cells[1]).toMatch(/\d/);        // есть числовые данные
+  }
+});
+```
+
+**B) Тест workflow (CRUD):**
+```typescript
+test('TC-XXX-NNN: Создание и проверка элемента', async ({ page }) => {
+  // Открыть форму
+  await page.getByRole('button', { name: new RegExp(t('btn.add'), 'i') }).click();
+  const modal = page.locator('.modal__wrapper').first();
+  await expect(modal).toBeVisible();
+
+  // Заполнить форму
+  await modal.locator('input').first().fill('Test Item ' + Date.now());
+  await modal.getByRole('button', { name: new RegExp(t('btn.save'), 'i') }).click();
+
+  // Проверить результат
+  await expect(page.locator('table:visible')).toContainText('Test Item');
+});
+```
+
+**C) Тест фильтрации:**
+```typescript
+test('TC-XXX-NNN: Фильтр изменяет данные', async ({ page }) => {
+  const rows = page.locator('table:visible tbody tr');
+  const countBefore = await rows.count();
+
+  // Применить фильтр
+  await page.locator('select').first().selectOption({ index: 1 });
+  await page.waitForLoadState('networkidle');
+
+  const countAfter = await rows.count();
+  // Фильтр должен изменить количество или оставить подмножество
+  expect(countAfter).toBeLessThanOrEqual(countBefore);
+});
+```
+
+**D) Негативный тест:**
+```typescript
+test('TC-XXX-NNN: Валидация пустой формы', async ({ page }) => {
+  await page.getByRole('button', { name: new RegExp(t('btn.add'), 'i') }).click();
+  const modal = page.locator('.modal__wrapper').first();
+
+  // Попытка сохранить пустую форму
+  await modal.getByRole('button', { name: new RegExp(t('btn.save'), 'i') }).click();
+
+  // Должна появиться ошибка или кнопка disabled
+  const hasError = await page.locator('[class*="error"], .validation-error').isVisible();
+  const isModalStillOpen = await modal.isVisible();
+  expect(hasError || isModalStillOpen).toBeTruthy();
+});
+```
+
+**E) Тест итогов/суммы:**
+```typescript
+test('TC-XXX-NNN: Итоговая строка содержит корректную сумму', async ({ page }) => {
+  const table = page.locator('table:visible').first();
+  const totalRow = table.locator('tfoot tr, tr:last-child').last();
+  const totalText = await totalRow.textContent();
+  expect(totalText).toBeTruthy();
+  // Проверяем что сумма — положительное число
+  const numbers = totalText!.match(/[\d.,]+/g);
+  expect(numbers).toBeTruthy();
+  expect(parseFloat(numbers![0].replace(',', '.'))).toBeGreaterThan(0);
+});
+```
+
 ### Правила для тестов:
 
 - ID теста из тест-кейса в названии: `TC-MODULE-NNN: Описание`
@@ -354,6 +507,9 @@ test.describe('DB: Task Reports', () => {
 - Тестовые данные — в `tests/fixtures/test-data.ts`, не хардкод в тесте
 - Используй `authHeaders` fixture для авторизации, не создавай токены вручную
 - Для API-тестов всегда проверяй: happy path + 401 + 403 + 400
+- **Все текстовые селекторы — через `t()` из `tests/i18n`**
+- **Таблицы — ВСЕГДА `table:visible` (есть скрытые таблицы в DOM)**
+- **Минимум 40% тестов должны быть deep (данные/workflow/фильтры)**
 
 ## Шаг 5: Валидация
 
@@ -376,6 +532,10 @@ test.describe('DB: Task Reports', () => {
 - Нет хардкода секретов в тестах
 - Auth fixture используется для всех авторизованных запросов
 - Тестовые данные вынесены в fixtures
+- **Все текстовые селекторы используют `t()` из `tests/i18n`** — ноль хардкода RU/EN
+- **Нет анти-паттернов**: `typeof x === 'number'`, `typeof x === 'boolean'`
+- **Распределение глубины**: shallow ≤20%, medium 30-40%, deep ≥40%
+- **Используй `workers: 2`** при запуске — сервер TTT не выдерживает больше
 
 ## Структура файлов
 

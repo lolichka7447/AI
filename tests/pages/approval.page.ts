@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
+import { t } from '../i18n';
 
 export class ApprovalPage extends BasePage {
   // Filters
@@ -40,37 +41,42 @@ export class ApprovalPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    // Filters
-    this.projectFilter = page.locator('[class*="filter"] select, [class*="project-filter"]').first();
-    this.employeeFilter = page.locator('[class*="employee-filter"], [placeholder*="сотрудник" i]').first();
-    this.periodFilter = page.locator('[class*="period-filter"], [class*="date-picker"]').first();
-    this.departmentFilter = page.locator('[class*="department-filter"]').first();
+    // Filters — approve-content__filters contains filter controls
+    this.projectFilter = page.locator('.approve-content__filters select, .header-filter select, [class*="filter"] select').first();
+    this.employeeFilter = page.locator(`.approve-content__filters input, input[placeholder*="${t('placeholder.employee')}" i]`).first();
+    this.periodFilter = page.locator('.approve-content__filters [class*="date"], [class*="period-filter"]').first();
+    this.departmentFilter = page.locator('.approve-content__filters select, [class*="department-filter"]').last();
 
-    // Week navigation
-    this.currentWeekButton = page.getByText('Текущая неделя');
-    this.prevWeekButton = page.locator('button:has(svg), button:has(img)').first();
-    this.nextWeekButton = page.locator('button:has(svg), button:has(img)').nth(1);
-    this.dateRange = page.locator('text=/\\d{2}\\.\\d{2}\\.\\d{4}.*–.*\\d{2}\\.\\d{2}\\.\\d{4}/');
+    // Week navigation — same WeekSwitcher component as report
+    this.currentWeekButton = page.locator('button.week-switcher__button-set-current-week').first()
+      .or(page.getByText(t('btn.currentWeek')));
+    this.prevWeekButton = page.locator('button.week-switcher__button-switch_prev').first()
+      .or(page.locator('.week-switcher button').first());
+    this.nextWeekButton = page.locator('button.week-switcher__button-switch_next').first()
+      .or(page.locator('.week-switcher button').last());
+    this.dateRange = page.locator('span.week-switcher__date').first()
+      .or(page.locator('text=/\\d{2}\\.\\d{2}\\.\\d{4}/').first());
 
-    // Employee list
-    this.employeeList = page.locator('[class*="employee-list"], [class*="approval-list"], table').first();
-    this.employeeRows = this.employeeList.locator('tr, [class*="employee-row"]');
+    // Employee list — approve-content__table > table (rc-table)
+    this.employeeList = page.locator('.approve-content__table table, .approve-reports__table table, table').first();
+    this.employeeRows = this.employeeList.locator('tbody tr');
 
     // Approval actions
-    this.approveButton = page.getByRole('button', { name: /Подтвердить|Approve/i });
-    this.rejectButton = page.getByRole('button', { name: /Отклонить|Reject/i });
-    this.approveAllButton = page.getByRole('button', { name: /Подтвердить все|Approve all/i });
-    this.rejectCommentInput = page.locator('textarea, [class*="reject-comment"] input, [class*="modal"] textarea').first();
-    this.rejectConfirmButton = page.locator('[class*="modal"] button:has-text("Отклонить"), [role="dialog"] button:has-text("Отклонить")').first();
+    this.approveButton = page.getByRole('button', { name: new RegExp(t('btn.approve'), 'i') });
+    this.rejectButton = page.getByRole('button', { name: new RegExp(t('btn.reject'), 'i') });
+    this.approveAllButton = page.getByRole('button', { name: new RegExp(t('btn.approveAll'), 'i') });
+    this.rejectCommentInput = page.locator('.tooltip textarea, .modal textarea, textarea').first();
+    this.rejectConfirmButton = page.locator(`.tooltip button:has-text("${t('btn.reject')}"), .modal button:has-text("${t('btn.reject')}")`).first()
+      .or(page.locator(`[role="dialog"] button:has-text("${t('btn.reject')}")`).first());
 
     // Table
-    this.reportTable = page.locator('table').first();
-    this.totalRow = page.locator('tr:has-text("Всего"), tr:has-text("Total")').last();
+    this.reportTable = page.locator('.approve-content__table table, table').first();
+    this.totalRow = page.locator(`tr:has-text("${t('label.total')}")`).last();
 
-    // Status indicators
-    this.reportedBadge = page.locator('[class*="reported"], [class*="status"]:has-text("REPORTED")').first();
-    this.approvedBadge = page.locator('[class*="approved"], [class*="status"]:has-text("APPROVED")').first();
-    this.rejectedBadge = page.locator('[class*="rejected"], [class*="status"]:has-text("REJECTED")').first();
+    // Status indicators — approve buttons show state via filled/unfilled icons
+    this.reportedBadge = page.locator('[class*="reported"], [class*="REPORTED"]').first();
+    this.approvedBadge = page.locator('[class*="approved"], [class*="APPROVED"]').first();
+    this.rejectedBadge = page.locator('[class*="rejected"], [class*="REJECTED"]').first();
 
     // Day summary
     this.daySummary = page.locator('[class*="day-summary"], [class*="daily-total"]').first();
@@ -81,7 +87,7 @@ export class ApprovalPage extends BasePage {
   // --- Employee helpers ---
 
   getEmployeeRow(employeeName: string): Locator {
-    return this.employeeList.locator(`tr:has-text("${employeeName}"), [class*="row"]:has-text("${employeeName}")`).first();
+    return this.employeeList.locator(`tr:has-text("${employeeName}")`).first();
   }
 
   async getEmployeeNames(): Promise<string[]> {
@@ -89,7 +95,7 @@ export class ApprovalPage extends BasePage {
     const count = await rows.count();
     const names: string[] = [];
     for (let i = 0; i < count; i++) {
-      const text = await rows.nth(i).locator('td, [class*="name"]').first().textContent();
+      const text = await rows.nth(i).locator('td').first().textContent();
       if (text && text.trim()) names.push(text.trim());
     }
     return names;
@@ -99,25 +105,32 @@ export class ApprovalPage extends BasePage {
 
   async approveEmployee(employeeName: string) {
     const row = this.getEmployeeRow(employeeName);
-    const approveBtn = row.locator('button:has-text("Подтвердить"), button[class*="approve"]').first();
+    // Hover to show approve buttons (ApproveButtonsOnHover)
+    await row.hover();
+    await this.page.waitForTimeout(200);
+    const approveBtn = row.locator('button[class*="approve"], [class*="like"]').first()
+      .or(row.locator(`button:has-text("${t('btn.approve')}")`).first());
     await approveBtn.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async rejectEmployee(employeeName: string, comment: string) {
     const row = this.getEmployeeRow(employeeName);
-    const rejectBtn = row.locator('button:has-text("Отклонить"), button[class*="reject"]').first();
+    await row.hover();
+    await this.page.waitForTimeout(200);
+    const rejectBtn = row.locator('button[class*="reject"], [class*="dislike"]').first()
+      .or(row.locator(`button:has-text("${t('btn.reject')}")`).first());
     await rejectBtn.click();
     await this.page.waitForTimeout(300);
 
     await this.rejectCommentInput.fill(comment);
     await this.rejectConfirmButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async approveAll() {
     await this.approveAllButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Cell helpers ---
@@ -129,6 +142,10 @@ export class ApprovalPage extends BasePage {
 
   async getCellValue(employeeName: string, dayIndex: number): Promise<string> {
     const cell = this.getCell(employeeName, dayIndex);
+    const valueSpan = cell.locator('.week-day-effort__value').first();
+    if (await valueSpan.isVisible().catch(() => false)) {
+      return (await valueSpan.textContent())?.trim() || '';
+    }
     return (await cell.textContent())?.trim() || '';
   }
 
@@ -136,17 +153,17 @@ export class ApprovalPage extends BasePage {
 
   async goToCurrentWeek() {
     await this.currentWeekButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async goToPrevWeek() {
     await this.prevWeekButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async goToNextWeek() {
     await this.nextWeekButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Filter helpers ---
@@ -154,12 +171,12 @@ export class ApprovalPage extends BasePage {
   async filterByProject(projectName: string) {
     await this.projectFilter.click();
     await this.page.locator(`text="${projectName}"`).click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async filterByEmployee(employeeName: string) {
     await this.employeeFilter.fill(employeeName);
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Day totals ---

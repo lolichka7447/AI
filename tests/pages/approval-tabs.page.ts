@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { ApprovalPage } from './approval.page';
+import { t } from '../i18n';
 
 /**
  * Extended ApprovalPage with tab navigation (По сотрудникам / По проектам)
@@ -37,91 +38,86 @@ export class ApprovalTabsPage extends ApprovalPage {
   constructor(page: Page) {
     super(page);
 
-    // Tabs
-    this.byEmployeeTab = page.locator('a:has-text("По сотрудникам"), button:has-text("По сотрудникам"), [class*="tab"]:has-text("По сотрудникам")').first();
-    this.byProjectTab = page.locator('a:has-text("По проектам"), button:has-text("По проектам"), [class*="tab"]:has-text("По проектам")').first();
+    // Tabs — main-tabs__item inside main-tabs__theme-main
+    this.byEmployeeTab = page.locator('.main-tabs__theme-main .main-tabs__item').filter({ hasText: new RegExp(t('tab.byEmployee'), 'i') }).first();
+    this.byProjectTab = page.locator('.main-tabs__theme-main .main-tabs__item').filter({ hasText: new RegExp(t('tab.byProject'), 'i') }).first();
 
-    // Dropdowns
-    this.employeeDropdown = page.locator('[class*="employee-dropdown"], [class*="employee-select"], select[class*="employee"]').first();
-    this.employeeDropdownItems = page.locator('[class*="dropdown-menu"] li, [class*="dropdown-item"], [role="option"]');
-    this.projectDropdown = page.locator('[class*="project-dropdown"], [class*="project-select"], select[class*="project"]').first();
-    this.projectDropdownItems = page.locator('[class*="dropdown-menu"] li, [class*="dropdown-item"], [role="option"]');
+    // Dropdowns — header-filter or standard select elements
+    this.employeeDropdown = page.locator('.header-filter select, .approve-content__filters select').first();
+    this.employeeDropdownItems = page.locator('option, [role="option"]');
+    this.projectDropdown = page.locator('.header-filter select, .approve-content__filters select').last();
+    this.projectDropdownItems = page.locator('option, [role="option"]');
 
-    // Comment popup
-    this.commentPopup = page.locator('[class*="comment-popup"], [class*="modal"]:has-text("Комментарий"), [role="dialog"]:has-text("Комментарий")');
-    this.commentTextarea = this.commentPopup.locator('textarea, input[type="text"]').first();
-    this.commentSaveButton = this.commentPopup.locator('button:has-text("Сохранить"), button:has-text("ОК")').first();
-    this.commentCancelButton = this.commentPopup.locator('button:has-text("Отмена"), button:has-text("Закрыть")').first();
-    this.commentDeleteButton = this.commentPopup.locator('button:has-text("Удалить"), button[class*="delete"]').first();
+    // Comment popup — rc-tooltip with FormReportComment or FormStateComment
+    this.commentPopup = page.locator('.tooltip.tooltip_light, [class*="tooltip_large"]').first()
+      .or(page.locator(`.modal:has-text("${t('btn.comment')}"), [role="dialog"]:has-text("${t('btn.comment')}")`));
+    this.commentTextarea = this.commentPopup.locator('textarea').first();
+    this.commentSaveButton = this.commentPopup.locator(`button:has-text("${t('btn.save')}"), button:has-text("${t('btn.ok')}")`).first();
+    this.commentCancelButton = this.commentPopup.locator(`button:has-text("${t('btn.cancel')}"), button:has-text("${t('btn.close')}")`).first();
+    this.commentDeleteButton = this.commentPopup.locator(`button:has-text("${t('btn.delete')}")`).first();
 
     // Color indicators
-    this.headerCells = page.locator('thead th, [class*="header"] td');
-    this.footerCells = page.locator('tfoot td, tr:has-text("Всего") td, tr:has-text("Итого") td');
+    this.headerCells = page.locator('thead th');
+    this.footerCells = page.locator(`tfoot td, tr:has-text("${t('label.total')}") td, tr:has-text("${t('label.totalAlt')}") td`);
 
-    // Notification
-    this.approvalNotificationBadge = page.locator('[class*="notification-badge"], [class*="badge"]').first();
+    // Notification — orange point icon
+    this.approvalNotificationBadge = page.locator('.need-to-approve-point, [class*="notification-badge"], [class*="badge"]').first();
 
     // Batch actions
-    this.selectAllCheckbox = page.locator('thead input[type="checkbox"], [class*="select-all"]').first();
-    this.batchApproveButton = page.getByRole('button', { name: /Подтвердить выбранные|Подтвердить все/i }).first();
-    this.batchRejectButton = page.getByRole('button', { name: /Отклонить выбранные|Отклонить все/i }).first();
+    this.selectAllCheckbox = page.locator('thead input[type="checkbox"]').first();
+    this.batchApproveButton = page.getByRole('button', { name: new RegExp(t('btn.approveSelected'), 'i') }).first();
+    this.batchRejectButton = page.getByRole('button', { name: new RegExp(t('btn.rejectSelected'), 'i') }).first();
   }
 
   // --- Tab navigation ---
 
   async switchToByEmployee() {
     await this.byEmployeeTab.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async switchToByProject() {
     await this.byProjectTab.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   // --- Dropdown helpers ---
 
   async selectEmployeeFromDropdown(employeeName: string) {
-    await this.employeeDropdown.click();
-    await this.page.waitForTimeout(300);
-    const item = this.page.locator(`text="${employeeName}"`).first();
-    await item.click();
-    await this.page.waitForTimeout(500);
+    await this.employeeDropdown.selectOption({ label: employeeName }).catch(async () => {
+      await this.employeeDropdown.click();
+      await this.page.locator(`text="${employeeName}"`).first().click();
+    });
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async selectProjectFromDropdown(projectName: string) {
-    await this.projectDropdown.click();
-    await this.page.waitForTimeout(300);
-    const item = this.page.locator(`text="${projectName}"`).first();
-    await item.click();
-    await this.page.waitForTimeout(500);
+    await this.projectDropdown.selectOption({ label: projectName }).catch(async () => {
+      await this.projectDropdown.click();
+      await this.page.locator(`text="${projectName}"`).first().click();
+    });
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async getEmployeeDropdownOptions(): Promise<string[]> {
-    await this.employeeDropdown.click();
-    await this.page.waitForTimeout(300);
-    const items = this.employeeDropdownItems;
-    const count = await items.count();
+    const options = this.employeeDropdown.locator('option');
+    const count = await options.count();
     const names: string[] = [];
     for (let i = 0; i < count; i++) {
-      const text = await items.nth(i).textContent();
+      const text = await options.nth(i).textContent();
       if (text && text.trim()) names.push(text.trim());
     }
-    await this.page.keyboard.press('Escape');
     return names;
   }
 
   async getProjectDropdownOptions(): Promise<string[]> {
-    await this.projectDropdown.click();
-    await this.page.waitForTimeout(300);
-    const items = this.projectDropdownItems;
-    const count = await items.count();
+    const options = this.projectDropdown.locator('option');
+    const count = await options.count();
     const names: string[] = [];
     for (let i = 0; i < count; i++) {
-      const text = await items.nth(i).textContent();
+      const text = await options.nth(i).textContent();
       if (text && text.trim()) names.push(text.trim());
     }
-    await this.page.keyboard.press('Escape');
     return names;
   }
 
@@ -129,18 +125,33 @@ export class ApprovalTabsPage extends ApprovalPage {
 
   async addCommentToCell(employeeName: string, dayIndex: number, comment: string) {
     const cell = this.getCell(employeeName, dayIndex);
-    await cell.click();
+    await cell.hover();
+    await this.page.waitForTimeout(200);
+    // Click the comment toggle button
+    const commentBtn = cell.locator('.week-day-effort__button-toggle-comment-form').first();
+    if (await commentBtn.isVisible().catch(() => false)) {
+      await commentBtn.click();
+    } else {
+      await cell.click();
+    }
     await this.page.waitForTimeout(300);
     if (await this.commentPopup.isVisible().catch(() => false)) {
       await this.commentTextarea.fill(comment);
       await this.commentSaveButton.click();
-      await this.page.waitForTimeout(500);
+      await this.page.waitForLoadState('networkidle').catch(() => {});
     }
   }
 
   async getCommentFromCell(employeeName: string, dayIndex: number): Promise<string> {
     const cell = this.getCell(employeeName, dayIndex);
-    await cell.click();
+    await cell.hover();
+    await this.page.waitForTimeout(200);
+    const commentBtn = cell.locator('.week-day-effort__button-toggle-comment-form').first();
+    if (await commentBtn.isVisible().catch(() => false)) {
+      await commentBtn.click();
+    } else {
+      await cell.click();
+    }
     await this.page.waitForTimeout(300);
     if (await this.commentPopup.isVisible().catch(() => false)) {
       const text = (await this.commentTextarea.inputValue()) || '';
@@ -193,7 +204,7 @@ export class ApprovalTabsPage extends ApprovalPage {
 
   async batchApprove() {
     await this.batchApproveButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
   async batchReject(comment: string) {
@@ -201,6 +212,6 @@ export class ApprovalTabsPage extends ApprovalPage {
     await this.page.waitForTimeout(300);
     await this.rejectCommentInput.fill(comment);
     await this.rejectConfirmButton.click();
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 }

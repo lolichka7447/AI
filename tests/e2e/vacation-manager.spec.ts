@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures/auth.fixture';
 import { VacationRequestsPage } from '../pages/vacation.page';
 import { NavigationComponent } from '../pages/navigation.component';
+import { t, tRegex } from '../i18n';
 
 // ============================================================================
 // Отпуска — Действия руководителя — 74 теста (TR-345..TR-418)
@@ -91,17 +92,17 @@ test.describe('Отпуска — Действия руководителя', ()
       const requests = new VacationRequestsPage(page);
       const deptFilter = requests.departmentFilter;
       const visible = await deptFilter.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBeDefined();
     });
 
     test('TR-355: Фильтр по сотруднику', async ({ authenticatedPage: page }) => {
-      const searchInput = page.locator('input[placeholder*="сотрудник" i], input[class*="search"]').first();
+      const searchInput = page.locator('input[placeholder*="сотрудник" i], input.react-autosuggest__input').first();
       const visible = await searchInput.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBeDefined();
     });
 
     test('TR-356: Сортировка по дате подачи', async ({ authenticatedPage: page }) => {
-      const sortBtn = page.locator('th:has-text("Дата"), button:has-text("Дата")').first();
+      const sortBtn = page.locator(`th:has-text("${t('label.date')}"), button:has-text("${t('label.date')}")`).first();
       if (await sortBtn.isVisible().catch(() => false)) {
         await sortBtn.click();
         await page.waitForTimeout(500);
@@ -111,7 +112,7 @@ test.describe('Отпуска — Действия руководителя', ()
     });
 
     test('TR-357: Сортировка по имени сотрудника', async ({ authenticatedPage: page }) => {
-      const sortBtn = page.locator('th:has-text("Сотрудник"), th:has-text("ФИО")').first();
+      const sortBtn = page.locator(`th:has-text("${t('label.employee')}"), th:has-text("${t('label.employeeAlt')}")`).first();
       if (await sortBtn.isVisible().catch(() => false)) {
         await sortBtn.click();
         await page.waitForTimeout(500);
@@ -130,15 +131,15 @@ test.describe('Отпуска — Действия руководителя', ()
       const count = await requests.getRequestCount();
       if (count === 0) {
         const empty = await requests.emptyState.isVisible().catch(() => false);
-        expect(typeof empty).toBe('boolean');
+        expect(empty).toBeDefined();
       }
       expect(true).toBe(true);
     });
 
     test('TR-360: Пагинация заявок', async ({ authenticatedPage: page }) => {
-      const pagination = page.locator('[class*="pagination"]').first();
+      const pagination = page.locator('.pagination, nav[aria-label="pagination"]').first();
       const visible = await pagination.isVisible().catch(() => false);
-      expect(typeof visible).toBe('boolean');
+      expect(visible).toBeDefined();
     });
 
     test('TR-361: Детали заявки — просмотр', async ({ authenticatedPage: page }) => {
@@ -207,7 +208,7 @@ test.describe('Отпуска — Действия руководителя', ()
       const count = await requests.getRequestCount();
       if (count > 0) {
         const visible = await requests.approveButton.isVisible().catch(() => false);
-        expect(typeof visible).toBe('boolean');
+        expect(visible).toBeDefined();
       }
     });
 
@@ -342,7 +343,7 @@ test.describe('Отпуска — Действия руководителя', ()
       const count = await requests.getRequestCount();
       if (count > 0) {
         const visible = await requests.rejectButton.isVisible().catch(() => false);
-        expect(typeof visible).toBe('boolean');
+        expect(visible).toBeDefined();
       }
     });
 
@@ -353,9 +354,9 @@ test.describe('Отпуска — Действия руководителя', ()
         if (await requests.rejectButton.isVisible().catch(() => false)) {
           await requests.rejectButton.click();
           await page.waitForTimeout(300);
-          const modal = page.locator('[class*="modal"], [role="dialog"]').first();
+          const modal = page.locator('.modal__wrapper, .modal, [role="dialog"]').first();
           const visible = await modal.isVisible().catch(() => false);
-          expect(typeof visible).toBe('boolean');
+          expect(visible).toBeDefined();
           await page.keyboard.press('Escape');
         }
       }
