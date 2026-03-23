@@ -21,65 +21,53 @@ test.describe('Настройки пользователя', () => {
   test.describe('Общие настройки', () => {
 
     test('TR-991: Страница настроек загружается', async ({ authenticatedPage: page }) => {
-      const settings = new UserSettingsPage(page);
-      const profileVisible = await settings.profileSection.isVisible().catch(() => false);
-      expect(profileVisible).toBe(true);
-      await expect(page).toHaveURL(/\/admin\/account|\/settings|\/profile/);
+      await expect(page).toHaveURL(/\/admin\/account/);
+      // Page should show user name and tabs
+      await expect(page.getByText('pvaynmaster')).toBeVisible();
     });
 
     test('TR-992: Таб «Общие» доступен', async ({ authenticatedPage: page }) => {
       const settings = new UserSettingsPage(page);
-      const visible = await settings.generalTab.isVisible().catch(() => false);
-      expect(visible).toBe(true);
+      await expect(settings.generalTab).toBeVisible();
     });
 
     test('TR-993: Секция токена видна', async ({ authenticatedPage: page }) => {
       const settings = new UserSettingsPage(page);
-      const tokenSection = settings.tokenSection;
-      const visible = await tokenSection.isVisible().catch(() => false);
-      expect(visible).toBe(true);
+      await expect(settings.tokenSection).toBeVisible();
     });
 
     test('TR-994: Генерация нового токена', async ({ authenticatedPage: page }) => {
       const settings = new UserSettingsPage(page);
-      const generateBtn = settings.generateTokenButton;
-      const visible = await generateBtn.isVisible().catch(() => false);
-      expect(visible).toBe(true);
+      // Token definition has 2 buttons (copy + revoke/regenerate)
+      await expect(settings.currentToken).toBeVisible();
+      const buttonCount = await settings.currentToken.locator('button').count();
+      expect(buttonCount).toBeGreaterThanOrEqual(1);
     });
 
     test('TR-995: Копирование токена', async ({ authenticatedPage: page }) => {
       const settings = new UserSettingsPage(page);
-      const copyBtn = settings.copyTokenButton;
-      const visible = await copyBtn.isVisible().catch(() => false);
-      expect(visible).toBe(true);
+      await expect(settings.copyTokenButton).toBeVisible();
     });
 
     test('TR-996: Отзыв токена', async ({ authenticatedPage: page }) => {
       const settings = new UserSettingsPage(page);
-      const revokeBtn = settings.revokeTokenButton;
-      const visible = await revokeBtn.isVisible().catch(() => false);
-      expect(visible).toBe(true);
+      await expect(settings.revokeTokenButton).toBeVisible();
     });
 
     test('TR-997: Поле профиля — имя', async ({ authenticatedPage: page }) => {
       const settings = new UserSettingsPage(page);
-      const nameInput = settings.nameInput;
-      const visible = await nameInput.isVisible().catch(() => false);
-      expect(visible).toBe(true);
+      // The spinbutton is for "Переносить задачи за последние N дней"
+      await expect(settings.nameInput).toBeVisible();
     });
 
     test('TR-998: Выбор языка интерфейса', async ({ authenticatedPage: page }) => {
-      const settings = new UserSettingsPage(page);
-      const langSelect = settings.languageSelect;
-      const visible = await langSelect.isVisible().catch(() => false);
-      expect(visible).toBe(true);
+      // Language switcher is in the page header (RU/EN dropdown)
+      await expect(page.locator('.language-switcher')).toBeVisible();
     });
 
     test('TR-999: Сохранение профиля', async ({ authenticatedPage: page }) => {
       const settings = new UserSettingsPage(page);
-      const saveBtn = settings.saveProfileButton;
-      const visible = await saveBtn.isVisible().catch(() => false);
-      expect(visible).toBe(true);
+      await expect(settings.saveProfileButton).toBeVisible();
     });
   });
 
@@ -90,8 +78,7 @@ test.describe('Настройки пользователя', () => {
 
     test('TR-1000: Таб «Трекеры» доступен', async ({ authenticatedPage: page }) => {
       const settings = new UserSettingsPage(page);
-      const visible = await settings.trackersTab.isVisible().catch(() => false);
-      await expect(page.locator('.page-content, main, form').first()).toBeVisible();
+      await expect(settings.trackersTab).toBeVisible();
     });
 
     test('TR-1001: Переключение на таб «Трекеры»', async ({ authenticatedPage: page }) => {
@@ -172,8 +159,7 @@ test.describe('Настройки пользователя', () => {
 
     test('TR-1007: Таб «Экспорт» доступен', async ({ authenticatedPage: page }) => {
       const settings = new UserSettingsPage(page);
-      const visible = await settings.exportTab.isVisible().catch(() => false);
-      await expect(page.locator('.page-content, main, form').first()).toBeVisible();
+      await expect(settings.exportTab).toBeVisible();
     });
 
     test('TR-1008: Переключение на таб «Экспорт»', async ({ authenticatedPage: page }) => {
