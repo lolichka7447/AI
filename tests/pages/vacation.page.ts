@@ -4,23 +4,52 @@ import { t } from '../i18n';
 
 /**
  * Page Object for /vacation/my — Мои отпуска и выходные
+ *
+ * Real DOM structure (from snapshot):
+ * - Table headers: Даты отпуска | Очередных дней | Административных дней | Тип отпуска | Подтверждает | Статус заявки | Месяц выплаты | Действия
+ * - Empty state: row "Нет данных" in tbody
+ * - Create button: "Создать заявку"
+ * - Modal: dialog role with date textboxes (placeholder "ДД.ММ.ГГГГ")
+ * - Unpaid checkbox: checkbox role "Без оплаты, административная заявка"
+ * - Payment month: textbox after "Выдать отпускные с зарплатой за"
+ * - Submit: "Сохранить", Cancel: "Отмена"
+ * - Filters: buttons "Открытые" / "Закрытые" / "Все" (NOT <select>)
+ * - Available days: "Доступно отпускных дней:" + "34 за 2026"
+ * - Event feed: "Лента отпускных событий" button
  */
 export class MyVacationsPage extends BasePage {
-  // Vacation list
-  readonly vacationList: Locator;
+  // Vacation table
+  readonly vacationTable: Locator;
   readonly vacationItems: Locator;
   readonly emptyState: Locator;
+  readonly totalRow: Locator;
 
   // Create vacation
   readonly createVacationButton: Locator;
   readonly vacationModal: Locator;
-  readonly vacationTypeSelect: Locator;
   readonly dateStartInput: Locator;
   readonly dateEndInput: Locator;
   readonly commentInput: Locator;
-  readonly fileUploadInput: Locator;
   readonly submitButton: Locator;
   readonly cancelButton: Locator;
+
+  // Business fields in form
+  readonly unpaidCheckbox: Locator;
+  readonly paymentMonthInput: Locator;
+  readonly requestedDaysInfo: Locator;
+  readonly approverInfo: Locator;
+  readonly daysLimitationWarning: Locator;
+
+  // Page-level info
+  readonly availableDaysText: Locator;
+  readonly eventFeedButton: Locator;
+
+  // Tab filters (buttons, not select)
+  readonly filterOpen: Locator;
+  readonly filterClosed: Locator;
+  readonly filterAll: Locator;
+  readonly tabVacations: Locator;
+  readonly tabDayoffs: Locator;
 
   // Transfer day-off
   readonly transferDayOffButton: Locator;
@@ -29,9 +58,7 @@ export class MyVacationsPage extends BasePage {
   readonly transferToDate: Locator;
   readonly transferSubmitButton: Locator;
 
-  // Vacation details
-  readonly detailPanel: Locator;
-  readonly statusBadge: Locator;
+  // Row actions
   readonly deleteButton: Locator;
   readonly editButton: Locator;
 
@@ -42,60 +69,267 @@ export class MyVacationsPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.vacationList = page.locator('[class*="vacation-list"], [class*="absence-list"], table, main').first();
-    this.vacationItems = this.vacationList.locator('tr, [class*="vacation-item"], [class*="absence-item"]');
-    this.emptyState = page.locator(`[class*="empty"], text=/${t('msg.noVacations')}/i, text=/${t('msg.noData')}/i`).first();
+    // Table
+    this.vacationTable = page.locator('table:visible').first();
+    // tbody tr — data rows (exclude header rowgroup and footer/total rowgroup)
+    this.vacationItems = this.vacationTable.locator('tbody').first().locator('tr');
+    this.emptyState = page.locator('td:has-text("Нет данных"), td:has-text("No data")').first();
+    this.totalRow = this.vacationTable.locator('tr:has-text("Всего"), tr:has-text("Total")').first();
 
-    this.createVacationButton = page.getByRole('button', { name: new RegExp(t('btn.create'), 'i') }).first();
-    this.vacationModal = page.locator('.modal__wrapper, .modal, [role="dialog"]').first();
-    this.vacationTypeSelect = this.vacationModal.locator('label.uikit-checkbox, [class*="uikit-checkbox"], select, [class*="type-select"]').first();
+    // Create button: "Создать заявку" / "Create request"
+    this.createVacationButton = page.getByRole('button', { name: /Создать|Create/i }).first();
+
+    // Modal (dialog role)
+    this.vacationModal = page.getByRole('dialog').first();
+
+    // Date inputs in modal — readonly date-picker inputs
+    // The inputs are readonly, so we must click to open calendar and pick dates
     this.dateStartInput = this.vacationModal.locator('input.date-picker__input').first();
     this.dateEndInput = this.vacationModal.locator('input.date-picker__input').nth(1);
-    this.commentInput = this.vacationModal.locator(`textarea, input[placeholder*="${t('placeholder.comment')}" i]`).first();
-    this.fileUploadInput = this.vacationModal.locator('input[type="file"]').first();
-    this.submitButton = this.vacationModal.locator(`button:has-text("${t('btn.send')}"), button:has-text("${t('btn.save')}"), button:has-text("${t('btn.create')}"), button[type="submit"]`).first();
-    this.cancelButton = this.vacationModal.locator(`button:has-text("${t('btn.cancel')}"), button:has-text("${t('btn.close')}")`).first();
 
+    // Comment textbox (last textbox in form, after "Комментарий" label)
+    this.commentInput = this.vacationModal.locator('textbox, textarea').last()
+      .or(this.vacationModal.getByRole('textbox').last());
+
+    // Submit / Cancel
+    this.submitButton = this.vacationModal.getByRole('button', { name: new RegExp(`${t('btn.save')}|${t('btn.send')}`, 'i') }).first();
+    this.cancelButton = this.vacationModal.getByRole('button', { name: new RegExp(`${t('btn.cancel')}`, 'i') }).first();
+
+    // Unpaid checkbox: "Без оплаты, административная заявка"
+    this.unpaidCheckbox = this.vacationModal.getByRole('checkbox', { name: /Без оплаты|Unpaid|administrative/i });
+
+    // Payment month input (textbox after "Выдать отпускные с зарплатой за" label)
+    this.paymentMonthInput = this.vacationModal.locator('input.date-picker__input, [class*="date-picker"] input').nth(2)
+      .or(this.vacationModal.getByRole('textbox').nth(2));
+
+    // "Запрошено дней: N" text
+    this.requestedDaysInfo = this.vacationModal.locator('text=/Запрошено дней|Requested days/i').first()
+      .or(this.vacationModal.locator('strong:has-text("Запрошено")'));
+
+    // Approver info
+    this.approverInfo = this.vacationModal.locator('dt:has-text("Подтверждает"), dt:has-text("Approver")').first();
+
+    // Days limitation warning
+    this.daysLimitationWarning = this.vacationModal.locator('[class*="warning"], [class*="limitation"], [class*="alert"]').first();
+
+    // Available days on page: "Доступно отпускных дней:" text
+    this.availableDaysText = page.locator('text=/Доступно отпускных|Available vacation/i').first();
+
+    // Event feed button
+    this.eventFeedButton = page.getByRole('button', { name: /Лента|Event feed/i }).first();
+
+    // Tab filters (buttons)
+    this.filterOpen = page.getByRole('button', { name: /Открытые|Open/i }).first();
+    this.filterClosed = page.getByRole('button', { name: /Закрытые|Closed/i }).first();
+    this.filterAll = page.getByRole('button', { name: /^Все$|^All$/i }).first();
+    this.tabVacations = page.getByRole('button', { name: /Отпуска|Vacations/i }).first();
+    this.tabDayoffs = page.getByRole('button', { name: /Выходные|Day offs/i }).first();
+
+    // Transfer day-off
     this.transferDayOffButton = page.getByRole('button', { name: new RegExp(t('btn.transferDay'), 'i') }).first();
-    this.transferModal = page.locator(`.modal:has-text("${t('btn.transferDay')}"), [role="dialog"]:has-text("${t('btn.transferDay')}")`);
-    this.transferFromDate = this.transferModal.locator('input').first();
-    this.transferToDate = this.transferModal.locator('input').last();
-    this.transferSubmitButton = this.transferModal.locator(`button:has-text("${t('btn.save')}"), button:has-text("${t('btn.transferDayAlt')}")`).first();
+    this.transferModal = page.getByRole('dialog').first();
+    this.transferFromDate = this.transferModal.getByRole('textbox').first();
+    this.transferToDate = this.transferModal.getByRole('textbox').last();
+    this.transferSubmitButton = this.transferModal.getByRole('button', { name: new RegExp(`${t('btn.save')}|${t('btn.transferDayAlt')}`, 'i') }).first();
 
-    this.detailPanel = page.locator('[class*="detail"], [class*="sidebar"], [class*="drawer"]').first();
-    this.statusBadge = page.locator('[class*="status"], [class*="badge"]').first();
+    // Row actions
     this.deleteButton = page.getByRole('button', { name: new RegExp(t('btn.delete'), 'i') }).first();
     this.editButton = page.getByRole('button', { name: new RegExp(t('btn.edit'), 'i') }).first();
 
+    // Alerts
     this.alertContainer = page.locator('.popup.popup_show, [role="alert"], .rc-notification').first();
-    this.errorMessage = this.vacationModal.locator('[class*="error"], [class*="validation"]').first();
+    this.errorMessage = page.locator('[class*="error"], [class*="validation"], .popup.popup_show').first();
   }
 
   get url() { return '/vacation/my'; }
 
+  /** Count data rows in vacation table (excluding header, empty state, total) */
   async getVacationCount(): Promise<number> {
-    return await this.vacationItems.count();
+    const isEmpty = await this.emptyState.isVisible().catch(() => false);
+    if (isEmpty) return 0;
+
+    // Count rows excluding "Нет данных" and "Всего" rows
+    const allRows = await this.vacationItems.count();
+    let dataRows = 0;
+    for (let i = 0; i < allRows; i++) {
+      const text = (await this.vacationItems.nth(i).textContent()) || '';
+      if (!text.includes('Нет данных') && !text.includes('No data') && !text.includes('Всего') && !text.includes('Total')) {
+        dataRows++;
+      }
+    }
+    return dataRows;
+  }
+
+  /** Check if the table has actual data (not just "Нет данных") */
+  async hasVacations(): Promise<boolean> {
+    const isEmpty = await this.emptyState.isVisible().catch(() => false);
+    return !isEmpty;
   }
 
   async openCreateForm() {
     await this.createVacationButton.click();
+    await this.vacationModal.waitFor({ state: 'visible', timeout: 5000 });
+  }
+
+  /**
+   * Fill a date input by removing readonly attribute and typing the date value.
+   * The input uses react-datetime (rdtPicker) which is readonly by default.
+   * Format: DD.MM.YYYY (matching the placeholder "ДД.ММ.ГГГГ")
+   */
+  private async fillDate(input: Locator, dateISO: string) {
+    const target = new Date(dateISO + 'T12:00:00');
+    const day = String(target.getDate()).padStart(2, '0');
+    const month = String(target.getMonth() + 1).padStart(2, '0');
+    const year = target.getFullYear();
+    const formatted = `${day}.${month}.${year}`;
+
+    // Remove readonly attribute so we can type into the input
+    await input.evaluate((el: HTMLInputElement) => {
+      el.removeAttribute('readonly');
+    });
+
+    // Clear and type the date
+    await input.click({ clickCount: 3 }); // select all
+    await input.fill(formatted);
+
+    // Close calendar popup by clicking elsewhere in the modal (e.g. on the form title)
+    const title = this.vacationModal.locator('text=/Период|Period/i').first();
+    if (await title.isVisible().catch(() => false)) {
+      await title.click();
+    }
     await this.page.waitForTimeout(300);
   }
 
   async createVacation(startDate: string, endDate: string, comment?: string) {
     await this.openCreateForm();
-    await this.dateStartInput.fill(startDate);
-    await this.dateEndInput.fill(endDate);
+    await this.fillDate(this.dateStartInput, startDate);
+    await this.fillDate(this.dateEndInput, endDate);
     if (comment) {
       await this.commentInput.fill(comment);
     }
     await this.submitButton.click();
+    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForTimeout(1000);
+
+    // If modal is still open (validation error), close it
+    const modalStillOpen = await this.vacationModal.isVisible().catch(() => false);
+    if (modalStillOpen) {
+      await this.cancelButton.click().catch(() => this.page.keyboard.press('Escape'));
+      await this.page.waitForTimeout(500);
+    }
+  }
+
+  /** Create a REGULAR vacation (paid, annual leave) */
+  async createRegularVacation(startDate: string, endDate: string, paymentMonth?: string, comment?: string) {
+    await this.openCreateForm();
+    // Ensure unpaid checkbox is NOT checked (default = regular/paid)
+    if (await this.unpaidCheckbox.isChecked().catch(() => false)) {
+      await this.unpaidCheckbox.click();
+      await this.page.waitForTimeout(200);
+    }
+    await this.fillDate(this.dateStartInput, startDate);
+    await this.fillDate(this.dateEndInput, endDate);
+    if (comment) {
+      await this.commentInput.fill(comment);
+    }
+    await this.submitButton.click();
+    await this.page.waitForLoadState('networkidle');
     await this.page.waitForTimeout(500);
   }
 
+  /** Create an ADMINISTRATIVE (unpaid) vacation */
+  async createAdministrativeVacation(startDate: string, endDate: string, comment?: string) {
+    await this.openCreateForm();
+    // Check the unpaid checkbox
+    if (!(await this.unpaidCheckbox.isChecked().catch(() => false))) {
+      await this.unpaidCheckbox.click();
+      await this.page.waitForTimeout(200);
+    }
+    await this.fillDate(this.dateStartInput, startDate);
+    await this.fillDate(this.dateEndInput, endDate);
+    if (comment) {
+      await this.commentInput.fill(comment);
+    }
+    await this.submitButton.click();
+    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForTimeout(500);
+  }
+
+  /** Get text content of a specific cell in the vacation table */
+  async getTableCellText(row: number, col: number): Promise<string> {
+    const cell = this.vacationItems.nth(row).locator('td').nth(col);
+    return (await cell.textContent())?.trim() || '';
+  }
+
+  /** Get all column texts for a given row as array */
+  async getRowCells(row: number): Promise<string[]> {
+    const cells = this.vacationItems.nth(row).locator('td');
+    const count = await cells.count();
+    const texts: string[] = [];
+    for (let i = 0; i < count; i++) {
+      texts.push((await cells.nth(i).textContent())?.trim() || '');
+    }
+    return texts;
+  }
+
+  /** Get the available days text from the page header */
+  async getAvailableDaysInfo(): Promise<string> {
+    return (await this.availableDaysText.textContent())?.trim() || '';
+  }
+
+  /** Get the "Запрошено дней" text from the modal */
+  async getRequestedDaysText(): Promise<string> {
+    return (await this.requestedDaysInfo.textContent())?.trim() || '';
+  }
+
   async clickVacation(index: number) {
-    await this.vacationItems.nth(index).click();
+    await this.vacationItems.nth(index).locator('td').first().click();
     await this.page.waitForTimeout(300);
+  }
+
+  async deleteVacation(index: number) {
+    // Click on the second action button in the row to open the detail dialog
+    // First button = edit, second button = detail/view (with delete inside)
+    const row = this.vacationItems.nth(index);
+    const actionBtn = row.locator('button').last();
+    await actionBtn.click();
+    await this.page.waitForTimeout(500);
+
+    // Detail dialog "Подробнее о заявке" opens with "Удалить" and "Редактировать" buttons
+    const detailDialog = this.page.getByRole('dialog').first();
+    await detailDialog.waitFor({ state: 'visible', timeout: 5000 });
+
+    // Click "Удалить" (Delete) button inside the detail dialog
+    const deleteBtn = detailDialog.getByRole('button', { name: /Удалить|Delete/i }).first();
+    await deleteBtn.click();
+    await this.page.waitForTimeout(500);
+
+    // Confirmation dialog "Удалить заявку?" appears with its own "Удалить" button
+    // Wait for the confirmation dialog to appear (it's a separate dialog overlay)
+    await this.page.waitForTimeout(500);
+    const allDialogs = this.page.getByRole('dialog');
+    const dialogCount = await allDialogs.count();
+
+    // Find the confirmation dialog — it's the last one or the one with "Удалить заявку?" text
+    for (let d = dialogCount - 1; d >= 0; d--) {
+      const dlg = allDialogs.nth(d);
+      const text = (await dlg.textContent()) || '';
+      if (text.includes('Удалить заявку') || text.includes('Delete request')) {
+        const confirmBtn = dlg.getByRole('button', { name: /Удалить|Delete/i }).first();
+        if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await confirmBtn.click();
+          break;
+        }
+      }
+    }
+
+    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForTimeout(1000);
+
+    // Reload page to ensure fresh data
+    await this.page.reload();
+    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForTimeout(500);
   }
 
   async isAlertVisible(): Promise<boolean> {
@@ -109,7 +343,6 @@ export class MyVacationsPage extends BasePage {
 export class AvailabilityChartPage extends BasePage {
   readonly chartGrid: Locator;
   readonly monthHeaders: Locator;
-  readonly dayHeaders: Locator;
   readonly employeeRows: Locator;
   readonly eventSquares: Locator;
 
@@ -136,20 +369,19 @@ export class AvailabilityChartPage extends BasePage {
     super(page);
 
     this.chartGrid = page.locator('[class*="chart"], [class*="availability"], table:visible').first();
-    this.monthHeaders = this.chartGrid.locator('[class*="month-header"], th[colspan]');
-    this.dayHeaders = this.chartGrid.locator('[class*="day-header"], th:not([colspan])');
-    this.employeeRows = this.chartGrid.locator('tr[class*="employee"], tbody tr');
-    this.eventSquares = this.chartGrid.locator('[class*="event"], [class*="square"], td[class*="absence"]');
+    this.monthHeaders = this.chartGrid.locator('th[colspan]');
+    this.employeeRows = this.chartGrid.locator('tbody tr');
+    this.eventSquares = this.chartGrid.locator('td[class*="absence"], td[class*="event"]');
 
-    this.prevPeriodButton = page.locator('button:has(svg), button[class*="prev"]').first();
-    this.nextPeriodButton = page.locator('button:has(svg), button[class*="next"]').last();
-    this.periodLabel = page.locator('[class*="period-label"], h2, h3').first();
+    this.prevPeriodButton = page.locator('button:has(svg)').first();
+    this.nextPeriodButton = page.locator('button:has(svg)').nth(1);
+    this.periodLabel = page.locator('h2, h3, [class*="period"]').first();
 
-    this.departmentFilter = page.locator(`[class*="department-filter"], select:has-text("${t('filter.department')}")`).first();
-    this.employeeFilter = page.locator(`[class*="employee-filter"], input[placeholder*="${t('placeholder.employee')}" i]`).first();
+    this.departmentFilter = page.locator('select').first();
+    this.employeeFilter = page.locator('input[type="text"], input[placeholder]').first();
 
     this.legend = page.locator('[class*="legend"]').first();
-    this.legendItems = this.legend.locator('[class*="legend-item"], li, span');
+    this.legendItems = this.legend.locator('span, li, [class*="item"]');
 
     this.tooltip = page.locator('[class*="tooltip"], [role="tooltip"]').first();
 
@@ -185,20 +417,42 @@ export class AvailabilityChartPage extends BasePage {
     }
     return texts;
   }
+
+  async getPeriodLabelText(): Promise<string> {
+    return (await this.periodLabel.textContent())?.trim() || '';
+  }
+
+  async goToPrevPeriod() {
+    await this.prevPeriodButton.click();
+    await this.page.waitForTimeout(500);
+  }
+
+  async goToNextPeriod() {
+    await this.nextPeriodButton.click();
+    await this.page.waitForTimeout(500);
+  }
 }
 
 /**
  * Page Object for /vacation/request — Заявки сотрудников
  */
 export class VacationRequestsPage extends BasePage {
-  readonly requestList: Locator;
+  readonly requestTable: Locator;
   readonly requestItems: Locator;
   readonly emptyState: Locator;
 
   // Approval actions
   readonly approveButton: Locator;
   readonly rejectButton: Locator;
-  readonly approvalBar: Locator;
+
+  // Reject modal
+  readonly rejectModal: Locator;
+  readonly rejectReasonInput: Locator;
+  readonly rejectConfirmButton: Locator;
+
+  // Checkboxes
+  readonly selectAllCheckbox: Locator;
+  readonly rowCheckboxes: Locator;
 
   // Filters
   readonly statusFilter: Locator;
@@ -207,22 +461,48 @@ export class VacationRequestsPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.requestList = page.locator('[class*="request-list"], table, main').first();
-    this.requestItems = this.requestList.locator('tr, [class*="request-item"]');
-    this.emptyState = page.locator(`[class*="empty"], text=/${t('msg.noRequests')}/i`).first();
+    this.requestTable = page.locator('table:visible').first();
+    this.requestItems = this.requestTable.locator('tbody tr');
+    this.emptyState = page.locator('td:has-text("Нет данных"), td:has-text("No data")').first();
 
     this.approveButton = page.getByRole('button', { name: new RegExp(t('btn.approve'), 'i') }).first();
     this.rejectButton = page.getByRole('button', { name: new RegExp(t('btn.reject'), 'i') }).first();
-    this.approvalBar = page.locator('[class*="approval-bar"], [class*="action-bar"]').first();
 
-    this.statusFilter = page.locator('[class*="status-filter"], select').first();
-    this.departmentFilter = page.locator(`[class*="department-filter"], select:has-text("${t('filter.department')}")`).first();
+    this.rejectModal = page.getByRole('dialog').first();
+    this.rejectReasonInput = this.rejectModal.getByRole('textbox').first();
+    this.rejectConfirmButton = this.rejectModal.getByRole('button', { name: new RegExp(`${t('btn.reject')}|${t('btn.confirm')}`, 'i') }).first();
+
+    this.selectAllCheckbox = page.locator('thead input[type="checkbox"], th input[type="checkbox"]').first();
+    this.rowCheckboxes = page.locator('tbody input[type="checkbox"], td input[type="checkbox"]');
+
+    this.statusFilter = page.locator('select').first();
+    this.departmentFilter = page.locator('select').nth(1);
   }
 
   get url() { return '/vacation/request'; }
 
   async getRequestCount(): Promise<number> {
+    const isEmpty = await this.emptyState.isVisible().catch(() => false);
+    if (isEmpty) return 0;
     return await this.requestItems.count();
+  }
+
+  /** Alias for backward compat */
+  get requestList() { return this.requestTable; }
+
+  async getRequestCellText(row: number, col: number): Promise<string> {
+    const cell = this.requestItems.nth(row).locator('td').nth(col);
+    return (await cell.textContent())?.trim() || '';
+  }
+
+  async getRequestRowCells(row: number): Promise<string[]> {
+    const cells = this.requestItems.nth(row).locator('td');
+    const count = await cells.count();
+    const texts: string[] = [];
+    for (let i = 0; i < count; i++) {
+      texts.push((await cells.nth(i).textContent())?.trim() || '');
+    }
+    return texts;
   }
 }
 
@@ -239,17 +519,39 @@ export class VacationDaysPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.dataTable = page.locator('table:visible').first();
+    this.dataTable = page.locator('table').first();
     this.dataRows = this.dataTable.locator('tbody tr');
-    this.searchInput = page.locator(`input[placeholder*="${t('placeholder.search')}" i], input[class*="search"]`).first();
-    this.departmentFilter = page.locator(`[class*="department-filter"], select:has-text("${t('filter.department')}")`).first();
+    this.searchInput = page.locator('input[type="text"], input[placeholder]').first();
+    this.departmentFilter = page.locator('select').first();
     this.tooltip = page.locator('[class*="tooltip"], [role="tooltip"]').first();
   }
 
   get url() { return '/vacation/vacation-days'; }
 
   async getRowCount(): Promise<number> {
+    await this.dataRows.first().waitFor({ state: 'attached', timeout: 10000 }).catch(() => {});
     return await this.dataRows.count();
+  }
+
+  async getCellText(row: number, col: number): Promise<string> {
+    const cell = this.dataRows.nth(row).locator('td').nth(col);
+    return (await cell.textContent())?.trim() || '';
+  }
+
+  async getRowCells(row: number): Promise<string[]> {
+    const cells = this.dataRows.nth(row).locator('td');
+    const count = await cells.count();
+    const texts: string[] = [];
+    for (let i = 0; i < count; i++) {
+      texts.push((await cells.nth(i).textContent())?.trim() || '');
+    }
+    return texts;
+  }
+
+  async getCellNumber(row: number, col: number): Promise<number> {
+    const text = await this.getCellText(row, col);
+    const match = text.match(/-?\d+(\.\d+)?/);
+    return match ? parseFloat(match[0]) : NaN;
   }
 }
 
@@ -267,8 +569,8 @@ export class VacationPaymentPage extends BasePage {
 
     this.dataTable = page.locator('table:visible').first();
     this.dataRows = this.dataTable.locator('tbody tr');
-    this.periodFilter = page.locator('[class*="period"], [class*="date-range"], select').first();
-    this.emptyState = page.locator('[class*="empty"], text=/нет данных/i').first();
+    this.periodFilter = page.locator('select').first();
+    this.emptyState = page.locator('td:has-text("Нет данных"), td:has-text("No data")').first();
   }
 
   get url() { return '/vacation/payment'; }
@@ -293,10 +595,10 @@ export class VacationDaysCorrectionPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.form = page.locator('form, [class*="correction-form"]').first();
-    this.employeeSelect = page.locator('select[class*="employee"], [class*="employee-select"]').first();
-    this.daysInput = page.locator('input[type="number"], input[class*="days"]').first();
-    this.reasonInput = page.locator(`textarea, input[placeholder*="${t('placeholder.reason')}" i]`).first();
+    this.form = page.locator('form').first();
+    this.employeeSelect = page.locator('select').first();
+    this.daysInput = page.locator('input[type="number"]').first();
+    this.reasonInput = page.getByRole('textbox').first();
     this.submitButton = page.getByRole('button', { name: new RegExp(t('btn.save'), 'i') }).first();
     this.dataTable = page.locator('table:visible').first();
     this.dataRows = this.dataTable.locator('tbody tr');
@@ -306,6 +608,16 @@ export class VacationDaysCorrectionPage extends BasePage {
 
   async getRowCount(): Promise<number> {
     return await this.dataRows.count();
+  }
+
+  async getRowCells(row: number): Promise<string[]> {
+    const cells = this.dataRows.nth(row).locator('td');
+    const count = await cells.count();
+    const texts: string[] = [];
+    for (let i = 0; i < count; i++) {
+      texts.push((await cells.nth(i).textContent())?.trim() || '');
+    }
+    return texts;
   }
 }
 
@@ -325,10 +637,10 @@ export class EmployeeSickLeavesPage extends BasePage {
 
     this.dataTable = page.locator('table:visible').first();
     this.dataRows = this.dataTable.locator('tbody tr');
-    this.searchInput = page.locator(`input[placeholder*="${t('placeholder.search')}" i], input[class*="search"]`).first();
-    this.departmentFilter = page.locator(`[class*="department-filter"], select:has-text("${t('filter.department')}")`).first();
-    this.statusFilter = page.locator(`[class*="status-filter"], select:has-text("${t('filter.status')}")`).first();
-    this.emptyState = page.locator(`[class*="empty"], text=/${t('msg.noData')}/i`).first();
+    this.searchInput = page.locator('input[type="text"], input[placeholder]').first();
+    this.departmentFilter = page.locator('select').first();
+    this.statusFilter = page.locator('select').nth(1);
+    this.emptyState = page.locator('td:has-text("Нет данных"), td:has-text("No data")').first();
   }
 
   get url() { return '/vacation/sick-leaves-of-employees'; }
