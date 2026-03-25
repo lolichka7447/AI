@@ -1,4 +1,4 @@
-import { APIRequestContext } from '@playwright/test';
+import { APIRequestContext, Page } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL || 'https://ttt-qa-2.noveogroup.com';
 
@@ -7,12 +7,15 @@ const BASE_URL = process.env.BASE_URL || 'https://ttt-qa-2.noveogroup.com';
  * Endpoint: PATCH /api/ttt/test-api/clock
  *
  * IMPORTANT: Always reset time in afterAll to avoid affecting other tests.
+ *
+ * Accepts either a Page (uses page.request with auth cookies) or APIRequestContext.
  */
 export async function setServerTime(
-  request: APIRequestContext,
+  requestOrPage: APIRequestContext | Page,
   dateISO: string,
 ): Promise<void> {
-  const response = await request.patch(`${BASE_URL}/api/ttt/test-api/clock`, {
+  const req = 'request' in requestOrPage ? (requestOrPage as Page).request : requestOrPage as APIRequestContext;
+  const response = await req.patch(`${BASE_URL}/api/ttt/test-api/clock`, {
     data: { dateTime: dateISO },
     headers: { 'Content-Type': 'application/json' },
   });
@@ -25,9 +28,10 @@ export async function setServerTime(
  * Reset server time to real current time.
  */
 export async function resetServerTime(
-  request: APIRequestContext,
+  requestOrPage: APIRequestContext | Page,
 ): Promise<void> {
-  const response = await request.delete(`${BASE_URL}/api/ttt/test-api/clock`);
+  const req = 'request' in requestOrPage ? (requestOrPage as Page).request : requestOrPage as APIRequestContext;
+  const response = await req.delete(`${BASE_URL}/api/ttt/test-api/clock`);
   if (!response.ok()) {
     throw new Error(`Failed to reset server time: ${response.status()} ${response.statusText()}`);
   }
@@ -37,9 +41,10 @@ export async function resetServerTime(
  * Get the current server time (real or overridden).
  */
 export async function getServerTime(
-  request: APIRequestContext,
+  requestOrPage: APIRequestContext | Page,
 ): Promise<string> {
-  const response = await request.get(`${BASE_URL}/api/ttt/test-api/clock`);
+  const req = 'request' in requestOrPage ? (requestOrPage as Page).request : requestOrPage as APIRequestContext;
+  const response = await req.get(`${BASE_URL}/api/ttt/test-api/clock`);
   if (!response.ok()) {
     throw new Error(`Failed to get server time: ${response.status()} ${response.statusText()}`);
   }

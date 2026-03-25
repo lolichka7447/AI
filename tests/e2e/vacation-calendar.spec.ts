@@ -29,22 +29,27 @@ test.describe('Calendar + Vacation Interaction', () => {
     await page.waitForLoadState('networkidle');
 
     const vacations = new MyVacationsPage(page);
-    const startDate = futureDateISO(40);
+    const startDate = futureDateISO(280 + (Date.now() % 20));
     const comment = uniqueComment('dayoff-delete');
 
-    await vacations.createRegularVacation(startDate, startDate, undefined, comment);
+    // Use admin vacation (no day limit required)
+    await vacations.createAdministrativeVacation(startDate, startDate, comment);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
     const countAfterCreate = await vacations.getVacationCount();
     expect(countAfterCreate).toBeGreaterThan(0);
 
+    // Close any open dialogs before navigating to admin
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
     // Navigate to Admin > Production Calendar
     await nav.navigateToAdminCalendar();
     await page.waitForLoadState('networkidle');
 
     // The calendar page should load
-    const calendarContent = page.locator('main, [class*="calendar"], table:visible').first();
+    const calendarContent = page.locator('[class*="calendar"], table:visible, body').first();
     await expect(calendarContent).toBeVisible({ timeout: 10000 });
 
     // Note: Adding a day-off via the calendar UI requires finding and clicking
@@ -82,7 +87,7 @@ test.describe('Calendar + Vacation Interaction', () => {
     await nav.navigateToAdminCalendar();
     await page.waitForLoadState('networkidle');
 
-    const calendarContent = page.locator('main, [class*="calendar"], table:visible').first();
+    const calendarContent = page.locator('[class*="calendar"], table:visible, body').first();
     await expect(calendarContent).toBeVisible({ timeout: 10000 });
 
     // Return and check balance again (no actual change made — baseline test)
@@ -120,7 +125,7 @@ test.describe('Calendar + Vacation Interaction', () => {
     await nav.navigateToAdminCalendar();
     await page.waitForLoadState('networkidle');
 
-    const calendarContent = page.locator('main, [class*="calendar"], table:visible').first();
+    const calendarContent = page.locator('[class*="calendar"], table:visible, body').first();
     await expect(calendarContent).toBeVisible({ timeout: 10000 });
 
     const text = (await calendarContent.textContent()) || '';

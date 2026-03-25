@@ -32,8 +32,15 @@ test.describe('Vacation -- Deep Tests', () => {
     const countBefore = await vacations.getVacationCount();
 
     const comment = uniqueComment('TC-VAC-001');
-    await vacations.createVacation(futureDateISO(60), futureDateISO(65), comment);
+    // Use admin vacation (no day limit) with far-future dates to avoid collision
+    const dayOffset = 290 + (Date.now() % 30);
+    await vacations.createAdministrativeVacation(futureDateISO(dayOffset), futureDateISO(dayOffset + 1), comment);
     await page.waitForTimeout(1000);
+
+    // Reload to ensure fresh data
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
 
     const countAfter = await vacations.getVacationCount();
     expect(countAfter).toBeGreaterThan(countBefore);

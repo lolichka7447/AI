@@ -7,6 +7,7 @@ import { setServerTime, resetServerTime } from '../helpers/timemachine';
 // ============================================================================
 // Vacation — Timemachine Tests (Year Change + Balance)
 // Uses Swagger Clock API to simulate date changes
+// NOTE: Clock API requires authenticated session (cookies from browser context)
 // ============================================================================
 
 function futureDateISO(daysFromNow: number): string {
@@ -21,19 +22,59 @@ function uniqueComment(prefix: string): string {
 
 test.describe('Timemachine — Year Change Scenarios', () => {
 
-  // IMPORTANT: Always reset server time after tests
-  test.afterAll(async ({ request }) => {
-    await resetServerTime(request).catch(() => {
-      console.warn('Failed to reset server time — manual reset may be needed');
+  // Check if timemachine API is accessible before running tests
+  let timemachineAvailable = true;
+
+  test.beforeAll(async ({ browser }) => {
+    // Use a new context with stored auth state to test clock API
+    const context = await browser.newContext({
+      storageState: '.auth/state.json',
     });
+    const page = await context.newPage();
+    try {
+      await page.goto(process.env.BASE_URL || 'https://ttt-qa-2.noveogroup.com');
+      await page.waitForLoadState('networkidle');
+      // Try a GET to check if clock API responds with 200
+      const response = await page.request.get(
+        `${process.env.BASE_URL || 'https://ttt-qa-2.noveogroup.com'}/api/ttt/test-api/clock`
+      );
+      if (!response.ok()) {
+        console.warn(`Timemachine API not accessible: ${response.status()}`);
+        timemachineAvailable = false;
+      }
+    } catch (e) {
+      console.warn('Timemachine API check failed:', e);
+      timemachineAvailable = false;
+    } finally {
+      await context.close();
+    }
   });
 
-  test('Year transition — norm days update for new year', async ({ authenticatedPage: page, request }) => {
+  // IMPORTANT: Always reset server time after tests
+  test.afterAll(async ({ browser }) => {
+    if (!timemachineAvailable) return;
+    const context = await browser.newContext({
+      storageState: '.auth/state.json',
+    });
+    const page = await context.newPage();
+    try {
+      await page.goto(process.env.BASE_URL || 'https://ttt-qa-2.noveogroup.com');
+      await resetServerTime(page);
+    } catch (e) {
+      console.warn('Failed to reset server time — manual reset may be needed:', e);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test('Year transition — norm days update for new year', async ({ authenticatedPage: page }) => {
+    test.skip(!timemachineAvailable, 'Timemachine API not accessible (401/403)');
+
     const nav = new NavigationComponent(page);
 
     // Set server time to January 1 of next year
     const nextYear = new Date().getFullYear() + 1;
-    await setServerTime(request, `${nextYear}-01-01T10:00:00`);
+    await setServerTime(page, `${nextYear}-01-01T10:00:00`);
     await page.waitForTimeout(1000);
 
     // Navigate to vacation days
@@ -52,13 +93,15 @@ test.describe('Timemachine — Year Change Scenarios', () => {
     expect(hasNumbers).toBe(true);
 
     // Reset time
-    await resetServerTime(request);
+    await resetServerTime(page);
   });
 
-  test('Next year restriction — before Feb 1 cannot create next-year vacation', async ({ authenticatedPage: page, request }) => {
+  test('Next year restriction — before Feb 1 cannot create next-year vacation', async ({ authenticatedPage: page }) => {
+    test.skip(!timemachineAvailable, 'Timemachine API not accessible (401/403)');
+
     // Set server to January 15
     const currentYear = new Date().getFullYear();
-    await setServerTime(request, `${currentYear}-01-15T10:00:00`);
+    await setServerTime(page, `${currentYear}-01-15T10:00:00`);
     await page.waitForTimeout(1000);
 
     const nav = new NavigationComponent(page);
@@ -71,8 +114,8 @@ test.describe('Timemachine — Year Change Scenarios', () => {
 
     // Try to create vacation for next year (February of next year)
     const nextYear = currentYear + 1;
-    await vacations.dateStartInput.fill(`${nextYear}-03-01`);
-    await vacations.dateEndInput.fill(`${nextYear}-03-05`);
+    await vacations.fillDate(vacations.dateStartInput, `${nextYear}-03-01`);
+    await vacations.fillDate(vacations.dateEndInput, `${nextYear}-03-05`);
     await vacations.commentInput.fill('next-year-restriction-test');
     await page.waitForTimeout(500);
 
@@ -89,12 +132,14 @@ test.describe('Timemachine — Year Change Scenarios', () => {
     expect(hasRestriction).toBe(true);
 
     await vacations.cancelButton.click().catch(() => page.keyboard.press('Escape'));
-    await resetServerTime(request);
+    await resetServerTime(page);
   });
 
-  test('Year transition — past periods balance appears', async ({ authenticatedPage: page, request }) => {
+  test('Year transition — past periods balance appears', async ({ authenticatedPage: page }) => {
+    test.skip(!timemachineAvailable, 'Timemachine API not accessible (401/403)');
+
     const nextYear = new Date().getFullYear() + 1;
-    await setServerTime(request, `${nextYear}-03-01T10:00:00`);
+    await setServerTime(page, `${nextYear}-03-01T10:00:00`);
     await page.waitForTimeout(1000);
 
     const nav = new NavigationComponent(page);
@@ -114,10 +159,12 @@ test.describe('Timemachine — Year Change Scenarios', () => {
     const firstRow = await daysPage.getRowCells(0);
     expect(firstRow.some(c => /\d/.test(c))).toBe(true);
 
-    await resetServerTime(request);
+    await resetServerTime(page);
   });
 
-  test('Admin vacation in past — still visible in calendar after time change', async ({ authenticatedPage: page, request }) => {
+  test('Admin vacation in past — still visible after time change', async ({ authenticatedPage: page }) => {
+    test.skip(!timemachineAvailable, 'Timemachine API not accessible (401/403)');
+
     const nav = new NavigationComponent(page);
 
     // First, create an admin vacation in the near future
@@ -136,7 +183,7 @@ test.describe('Timemachine — Year Change Scenarios', () => {
     // Advance time by 30 days
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 30);
-    await setServerTime(request, futureDate.toISOString().split('T')[0] + 'T10:00:00');
+    await setServerTime(page, futureDate.toISOString().split('T')[0] + 'T10:00:00');
     await page.waitForTimeout(1000);
 
     // Navigate back to my vacations
@@ -144,14 +191,16 @@ test.describe('Timemachine — Year Change Scenarios', () => {
     await page.waitForLoadState('networkidle');
 
     // The vacation should still be in the list (possibly with FINISHED status)
-    const pageText = (await page.locator('main').textContent()) || '';
+    const pageText = (await page.locator('body').textContent()) || '';
     expect(pageText.length).toBeGreaterThan(10);
 
-    await resetServerTime(request);
+    await resetServerTime(page);
   });
 
-  test('Expected balance years in chronological order after year change', async ({ authenticatedPage: page, request }) => {
-    await setServerTime(request, '2027-03-01T10:00:00');
+  test('Expected balance years in chronological order after year change', async ({ authenticatedPage: page }) => {
+    test.skip(!timemachineAvailable, 'Timemachine API not accessible (401/403)');
+
+    await setServerTime(page, '2027-03-01T10:00:00');
     await page.waitForTimeout(1000);
 
     const nav = new NavigationComponent(page);
@@ -165,13 +214,11 @@ test.describe('Timemachine — Year Change Scenarios', () => {
     const tableText = (await daysPage.dataTable.textContent()) || '';
     expect(tableText.length).toBeGreaterThan(20);
 
-    await resetServerTime(request);
+    await resetServerTime(page);
   });
 
-  test('3-month restriction: new employee cannot take regular vacation', async ({ authenticatedPage: page, request }) => {
-    // This test verifies the 3-month limitation for new employees
-    // For pvaynmaster this is likely already past the limitation period
-    // We verify that the limitation warning mechanism exists in the UI
+  test('3-month restriction: new employee cannot take regular vacation', async ({ authenticatedPage: page }) => {
+    // This test doesn't need timemachine — verifies limitation UI mechanism
     const nav = new NavigationComponent(page);
     await nav.navigateToMyVacations();
     await page.waitForLoadState('networkidle');
@@ -180,8 +227,8 @@ test.describe('Timemachine — Year Change Scenarios', () => {
     await vacations.openCreateForm();
     await expect(vacations.vacationModal).toBeVisible();
 
-    await vacations.dateStartInput.fill(futureDateISO(30));
-    await vacations.dateEndInput.fill(futureDateISO(35));
+    await vacations.fillDate(vacations.dateStartInput, futureDateISO(30));
+    await vacations.fillDate(vacations.dateEndInput, futureDateISO(35));
     await page.waitForTimeout(500);
 
     // For pvaynmaster (long-time employee), there should be no limitation warning

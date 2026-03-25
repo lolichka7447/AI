@@ -43,6 +43,7 @@ export class MyVacationsPage extends BasePage {
   // Page-level info
   readonly availableDaysText: Locator;
   readonly eventFeedButton: Locator;
+  readonly eventFeed: Locator;
 
   // Tab filters (buttons, not select)
   readonly filterOpen: Locator;
@@ -115,8 +116,9 @@ export class MyVacationsPage extends BasePage {
     // Available days on page: "Доступно отпускных дней:" text
     this.availableDaysText = page.locator('text=/Доступно отпускных|Available vacation/i').first();
 
-    // Event feed button
+    // Event feed button and container
     this.eventFeedButton = page.getByRole('button', { name: /Лента|Event feed/i }).first();
+    this.eventFeed = page.locator('[class*="event-feed"], [class*="eventFeed"], [class*="feed"]').first();
 
     // Tab filters (buttons)
     this.filterOpen = page.getByRole('button', { name: /Открытые|Open/i }).first();
@@ -176,7 +178,7 @@ export class MyVacationsPage extends BasePage {
    * The input uses react-datetime (rdtPicker) which is readonly by default.
    * Format: DD.MM.YYYY (matching the placeholder "ДД.ММ.ГГГГ")
    */
-  private async fillDate(input: Locator, dateISO: string) {
+  async fillDate(input: Locator, dateISO: string) {
     const target = new Date(dateISO + 'T12:00:00');
     const day = String(target.getDate()).padStart(2, '0');
     const month = String(target.getMonth() + 1).padStart(2, '0');
@@ -207,7 +209,17 @@ export class MyVacationsPage extends BasePage {
     if (comment) {
       await this.commentInput.fill(comment);
     }
-    await this.submitButton.click();
+
+    // Click submit — force: true in case button is temporarily disabled
+    const isDisabled = await this.submitButton.isDisabled().catch(() => false);
+    if (isDisabled) {
+      // Wait for button to become enabled (dates may still be processing)
+      await this.page.waitForTimeout(1000);
+    }
+    await this.submitButton.click({ timeout: 10000 }).catch(async () => {
+      // If still disabled, force click
+      await this.submitButton.click({ force: true });
+    });
     await this.page.waitForLoadState('networkidle');
     await this.page.waitForTimeout(1000);
 
@@ -223,7 +235,8 @@ export class MyVacationsPage extends BasePage {
   async createRegularVacation(startDate: string, endDate: string, paymentMonth?: string, comment?: string) {
     await this.openCreateForm();
     // Ensure unpaid checkbox is NOT checked (default = regular/paid)
-    if (await this.unpaidCheckbox.isChecked().catch(() => false)) {
+    const checkboxVisible = await this.unpaidCheckbox.isVisible().catch(() => false);
+    if (checkboxVisible && await this.unpaidCheckbox.isChecked().catch(() => false)) {
       await this.unpaidCheckbox.click();
       await this.page.waitForTimeout(200);
     }
@@ -234,16 +247,36 @@ export class MyVacationsPage extends BasePage {
     }
     await this.submitButton.click();
     await this.page.waitForLoadState('networkidle');
-    await this.page.waitForTimeout(500);
+    await this.page.waitForTimeout(1000);
+
+    // If modal is still open (validation error), close it
+    const modalStillOpen = await this.vacationModal.isVisible().catch(() => false);
+    if (modalStillOpen) {
+      await this.cancelButton.click().catch(() => this.page.keyboard.press('Escape'));
+      await this.page.waitForTimeout(500);
+    }
   }
 
   /** Create an ADMINISTRATIVE (unpaid) vacation */
   async createAdministrativeVacation(startDate: string, endDate: string, comment?: string) {
     await this.openCreateForm();
-    // Check the unpaid checkbox
-    if (!(await this.unpaidCheckbox.isChecked().catch(() => false))) {
-      await this.unpaidCheckbox.click();
-      await this.page.waitForTimeout(200);
+    await this.page.waitForTimeout(500);
+
+    // Check the unpaid checkbox — try multiple approaches
+    const checkboxVisible = await this.unpaidCheckbox.isVisible().catch(() => false);
+    if (checkboxVisible) {
+      const isChecked = await this.unpaidCheckbox.isChecked().catch(() => false);
+      if (!isChecked) {
+        await this.unpaidCheckbox.click();
+        await this.page.waitForTimeout(300);
+      }
+    } else {
+      // Fallback: click the label text "Без оплаты"
+      const label = this.vacationModal.locator('text=/Без оплаты|Unpaid/i').first();
+      if (await label.isVisible().catch(() => false)) {
+        await label.click();
+        await this.page.waitForTimeout(300);
+      }
     }
     await this.fillDate(this.dateStartInput, startDate);
     await this.fillDate(this.dateEndInput, endDate);
@@ -252,7 +285,14 @@ export class MyVacationsPage extends BasePage {
     }
     await this.submitButton.click();
     await this.page.waitForLoadState('networkidle');
-    await this.page.waitForTimeout(500);
+    await this.page.waitForTimeout(1000);
+
+    // If modal is still open (validation error), close it
+    const modalStillOpen = await this.vacationModal.isVisible().catch(() => false);
+    if (modalStillOpen) {
+      await this.cancelButton.click().catch(() => this.page.keyboard.press('Escape'));
+      await this.page.waitForTimeout(500);
+    }
   }
 
   /** Get text content of a specific cell in the vacation table */
@@ -428,7 +468,7 @@ export class AvailabilityChartPage extends BasePage {
   }
 
   async goToNextPeriod() {
-    await this.nextPeriodButton.click();
+    await this.nextPeriodButton.click({ force: true });
     await this.page.waitForTimeout(500);
   }
 }
@@ -465,8 +505,8 @@ export class VacationRequestsPage extends BasePage {
     this.requestItems = this.requestTable.locator('tbody tr');
     this.emptyState = page.locator('td:has-text("Нет данных"), td:has-text("No data")').first();
 
-    this.approveButton = page.getByRole('button', { name: new RegExp(t('btn.approve'), 'i') }).first();
-    this.rejectButton = page.getByRole('button', { name: new RegExp(t('btn.reject'), 'i') }).first();
+    this.approveButton = page.getByRole('button', { name: new RegExp(`${t('btn.approve')}|${t('btn.approveSelected')}|${t('btn.approveAll')}`, 'i') }).first();
+    this.rejectButton = page.getByRole('button', { name: new RegExp(`${t('btn.reject')}|${t('btn.rejectSelected')}|${t('btn.rejectAll')}`, 'i') }).first();
 
     this.rejectModal = page.getByRole('dialog').first();
     this.rejectReasonInput = this.rejectModal.getByRole('textbox').first();

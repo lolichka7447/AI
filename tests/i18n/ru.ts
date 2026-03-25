@@ -19,7 +19,7 @@ export const ru: Record<string, string> = {
   'nav.availabilityChart': 'График доступности',
   'nav.vacationRequests': 'Заявки сотрудников',
   'nav.employeeVacationDays': 'Отпускные дни сотрудников',
-  'nav.employeeSickLeaves': 'Больничные листы сотрудников',
+  'nav.employeeSickLeaves': 'Больничные сотрудников',
 
   // Statistics submenu
   'nav.generalStatistics': 'Общая статистика',
