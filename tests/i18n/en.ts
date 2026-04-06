@@ -232,6 +232,21 @@ export const en: Record<string, string> = {
   'msg.error': 'error',
   'msg.commentText': 'comment',
 
+  // ── Planner ──
+  'planner.title': 'Planner',
+  'planner.openForEditing': 'Open for editing',
+  'planner.addTask': 'Add task',
+  'planner.searchPlaceholder': 'My project',
+  'planner.selectProject': 'Select project',
+  'planner.showProjectsWhereI': 'Show projects where I',
+  'planner.member': 'Member',
+  'planner.remainingHours': 'Remaining hours',
+  'planner.info': 'Info',
+  'planner.tracker': 'Tracker',
+  'planner.taskTicket': 'Task',
+  'planner.copyTable': 'Copy table',
+  'planner.number': '№',
+
   // ── Filters / Sorting ──
   'filter.department': 'Department',
   'filter.status': 'Status',
