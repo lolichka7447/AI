@@ -74,4 +74,60 @@ export class MySickLeavePage extends BasePage {
     await this.sickLeaveItems.nth(index).click();
     await this.page.waitForTimeout(300);
   }
+
+  /**
+   * Create a sick leave via UI.
+   * Dates in format YYYY-MM-DD.
+   */
+  async createSickLeaveViaUI(startDate: string, endDate: string, comment?: string) {
+    await this.openCreateForm();
+    await this.modal.waitFor({ state: 'visible', timeout: 5000 });
+
+    // Fill start date
+    await this.dateStartInput.fill(startDate);
+    // Fill end date
+    await this.dateEndInput.fill(endDate);
+
+    // Optional comment
+    if (comment) {
+      const commentField = this.commentInput;
+      if (await commentField.isVisible().catch(() => false)) {
+        await commentField.fill(comment);
+      }
+    }
+
+    // Submit
+    await this.submitButton.click();
+    await this.page.waitForLoadState('networkidle').catch(() => {});
+    await this.page.waitForTimeout(1000);
+  }
+
+  /**
+   * Delete the first/currently selected sick leave via UI.
+   */
+  async deleteSickLeaveViaUI() {
+    await this.deleteButton.click();
+    // Confirm deletion in dialog if present
+    const confirmBtn = this.page.getByRole('button', { name: new RegExp(t('btn.yes') + '|' + t('btn.delete') + '|' + t('btn.confirm'), 'i') }).first();
+    if (await confirmBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await confirmBtn.click();
+    }
+    await this.page.waitForLoadState('networkidle').catch(() => {});
+    await this.page.waitForTimeout(1000);
+  }
+
+  /**
+   * Edit the currently selected sick leave dates via UI.
+   */
+  async editSickLeaveDatesViaUI(newStartDate: string, newEndDate: string) {
+    await this.editButton.click();
+    await this.modal.waitFor({ state: 'visible', timeout: 5000 });
+
+    await this.dateStartInput.fill(newStartDate);
+    await this.dateEndInput.fill(newEndDate);
+
+    await this.submitButton.click();
+    await this.page.waitForLoadState('networkidle').catch(() => {});
+    await this.page.waitForTimeout(1000);
+  }
 }

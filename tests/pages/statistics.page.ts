@@ -1,9 +1,19 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
-import { t } from '../i18n';
+import { t, tRegex } from '../i18n';
 
 export class StatisticsPage extends BasePage {
-  // Tabs
+  // General Statistics tabs (rc-tabs on /statistics/general)
+  readonly myTasksTab: Locator;
+  readonly myProjectsTab: Locator;
+  readonly projectEmployeesTab: Locator;
+  readonly deptProjectsTab: Locator;
+  readonly deptEmployeesTab: Locator;
+  readonly officeProjectsTab: Locator;
+  readonly officeEmployeesTab: Locator;
+  readonly tasksByEmployeeTab: Locator;
+
+  // Legacy aliases (keep tests from breaking)
   readonly departmentsTab: Locator;
   readonly employeesTab: Locator;
   readonly projectsTab: Locator;
@@ -28,14 +38,31 @@ export class StatisticsPage extends BasePage {
   // Headers
   readonly tableHeaders: Locator;
 
+  // Employee Reports — Norm tooltip
+  readonly normHeader: Locator;
+  readonly normTooltipTrigger: Locator;
+
   constructor(page: Page) {
     super(page);
 
-    // Tabs — Statistics uses rc-tabs (Ant Design), tab names: "Мои задачи", "Мои проекты", "Сотрудники моих проектов", etc.
-    this.departmentsTab = page.locator('.rc-tabs-tab').filter({ hasText: /Проекты отдела/i }).first();
-    this.employeesTab = page.locator('.rc-tabs-tab').filter({ hasText: /Сотрудники моих проектов|Сотрудники отдела/i }).first();
-    this.projectsTab = page.locator('.rc-tabs-tab').filter({ hasText: /Мои проекты/i }).first();
-    this.tasksTab = page.locator('.rc-tabs-tab').filter({ hasText: /Мои задачи/i }).first();
+    // Tabs — Statistics uses rc-tabs (Ant Design)
+    // Real tab names discovered from DOM: "Мои задачи", "Мои проекты",
+    // "Сотрудники моих проектов", "Проекты отдела", "Сотрудники отдела",
+    // "Проекты офиса", "Сотрудники офиса", "@ Задачи по сотрудникам"
+    this.myTasksTab = page.locator('.rc-tabs-tab').filter({ hasText: tRegex('tab.stat.myTasks') }).first();
+    this.myProjectsTab = page.locator('.rc-tabs-tab').filter({ hasText: tRegex('tab.stat.myProjects') }).first();
+    this.projectEmployeesTab = page.locator('.rc-tabs-tab').filter({ hasText: tRegex('tab.stat.projectEmployees') }).first();
+    this.deptProjectsTab = page.locator('.rc-tabs-tab').filter({ hasText: tRegex('tab.stat.deptProjects') }).first();
+    this.deptEmployeesTab = page.locator('.rc-tabs-tab').filter({ hasText: tRegex('tab.stat.deptEmployees') }).first();
+    this.officeProjectsTab = page.locator('.rc-tabs-tab').filter({ hasText: tRegex('tab.stat.officeProjects') }).first();
+    this.officeEmployeesTab = page.locator('.rc-tabs-tab').filter({ hasText: tRegex('tab.stat.officeEmployees') }).first();
+    this.tasksByEmployeeTab = page.locator('.rc-tabs-tab').filter({ hasText: tRegex('tab.stat.tasksByEmployee') }).first();
+
+    // Legacy aliases — map old names to correct tabs
+    this.departmentsTab = this.deptProjectsTab;
+    this.employeesTab = this.projectEmployeesTab;
+    this.projectsTab = this.myProjectsTab;
+    this.tasksTab = this.myTasksTab;
 
     // Filters
     this.periodFilter = page.locator('.header-filter, [class*="period"], [class*="date-range"]').first();
@@ -57,30 +84,55 @@ export class StatisticsPage extends BasePage {
 
     // Headers
     this.tableHeaders = this.dataTable.locator('th');
+
+    // Employee Reports — Norm column tooltip
+    // Structure: th > .uikit-table__cell > .uikit-table__title > div > .ReportsTable_normTitle__* > .custom-tooltip__wrapper > button
+    this.normHeader = page.locator('th:visible').filter({ hasText: tRegex('stat.norm') }).first();
+    this.normTooltipTrigger = this.normHeader.locator('[data-testid="custom-tooltip-wrapper"] button, [class*="custom-tooltip"] button').first();
   }
 
   get url() { return '/statistics'; }
 
   // --- Tab navigation ---
 
-  async switchToDepartments() {
-    await this.departmentsTab.click();
+  private async switchTab(tab: Locator) {
+    await tab.click();
     await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 
-  async switchToEmployees() {
-    await this.employeesTab.click();
-    await this.page.waitForLoadState('networkidle').catch(() => {});
+  async switchToMyTasks() { await this.switchTab(this.myTasksTab); }
+  async switchToMyProjects() { await this.switchTab(this.myProjectsTab); }
+  async switchToProjectEmployees() { await this.switchTab(this.projectEmployeesTab); }
+  async switchToDeptProjects() { await this.switchTab(this.deptProjectsTab); }
+  async switchToDeptEmployees() { await this.switchTab(this.deptEmployeesTab); }
+  async switchToOfficeProjects() { await this.switchTab(this.officeProjectsTab); }
+  async switchToOfficeEmployees() { await this.switchTab(this.officeEmployeesTab); }
+  async switchToTasksByEmployee() { await this.switchTab(this.tasksByEmployeeTab); }
+
+  // Legacy methods (kept for backward compatibility)
+  async switchToDepartments() { await this.switchTab(this.deptProjectsTab); }
+  async switchToEmployees() { await this.switchTab(this.projectEmployeesTab); }
+  async switchToProjects() { await this.switchTab(this.myProjectsTab); }
+  async switchToTasks() { await this.switchTab(this.myTasksTab); }
+
+  // --- Norm tooltip (Employee Reports page) ---
+
+  async clickNormTooltip() {
+    await this.normTooltipTrigger.click();
+    await this.page.waitForTimeout(500);
   }
 
-  async switchToProjects() {
-    await this.projectsTab.click();
-    await this.page.waitForLoadState('networkidle').catch(() => {});
-  }
-
-  async switchToTasks() {
-    await this.tasksTab.click();
-    await this.page.waitForLoadState('networkidle').catch(() => {});
+  async getNormTooltipText(): Promise<string> {
+    await this.clickNormTooltip();
+    // Tooltip appears as a sibling/child of custom-tooltip__wrapper
+    const tooltip = this.page.locator('[class*="custom-tooltip__content"], [class*="custom-tooltip"] [class*="content"], [role="tooltip"]').first();
+    const isVisible = await tooltip.isVisible({ timeout: 3000 }).catch(() => false);
+    if (isVisible) {
+      return (await tooltip.textContent())?.trim() || '';
+    }
+    // Fallback: get text from any newly appeared tooltip-like element
+    const fallback = this.page.locator('.rc-tooltip-inner, [class*="tooltip-content"], [class*="Tooltip"]').first();
+    return (await fallback.textContent().catch(() => ''))?.trim() || '';
   }
 
   // --- Data helpers ---
@@ -151,5 +203,23 @@ export class StatisticsPage extends BasePage {
       if (text) names.push(text.trim());
     }
     return names;
+  }
+
+  // --- Active tab ---
+
+  async getActiveTabText(): Promise<string> {
+    const active = this.page.locator('.rc-tabs-tab-active');
+    return (await active.textContent().catch(() => ''))?.trim() || '';
+  }
+
+  async getAllTabTexts(): Promise<string[]> {
+    const tabs = this.page.locator('.rc-tabs-tab');
+    const count = await tabs.count();
+    const texts: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const text = await tabs.nth(i).textContent();
+      if (text) texts.push(text.trim());
+    }
+    return texts;
   }
 }

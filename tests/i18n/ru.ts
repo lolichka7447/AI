@@ -134,6 +134,16 @@ export const ru: Record<string, string> = {
   'tab.reports': 'Репорты',
   'tab.tickets': 'Тикеты',
 
+  // Statistics tabs (rc-tabs on /statistics/general)
+  'tab.stat.myTasks': 'Мои задачи',
+  'tab.stat.myProjects': 'Мои проекты',
+  'tab.stat.projectEmployees': 'Сотрудники моих проектов',
+  'tab.stat.deptProjects': 'Проекты отдела',
+  'tab.stat.deptEmployees': 'Сотрудники отдела',
+  'tab.stat.officeProjects': 'Проекты офиса',
+  'tab.stat.officeEmployees': 'Сотрудники офиса',
+  'tab.stat.tasksByEmployee': '@ Задачи по сотрудникам',
+
   // ── Labels / Table headers ──
   'label.total': 'Всего',
   'label.totalAlt': 'Итого',
@@ -291,6 +301,16 @@ export const ru: Record<string, string> = {
   'vacation.rejectReason': 'Причина отклонения',
   'vacation.overlap': 'пересечен',
   'vacation.conversion': 'конверт',
+
+  // ── Statistics / Employee Reports ──
+  'stat.norm': 'Норма',
+  'stat.normTooltipCurrent': 'В скобках — норма сотрудника без вычета дней административного отпуска. Показывает, сколько часов можно отработать сверх индивидуальной нормы без перерасхода бюджета',
+  'stat.normTooltipExpected': 'В скобках — норма сотрудника без вычета дней административного отпуска и больничных по уходу за членом семьи. Показывает, сколько часов можно отработать сверх индивидуальной нормы без перерасхода бюджета',
+  'stat.employee': 'Сотрудник',
+  'stat.manager': 'Руководитель',
+  'stat.reported': 'Зарепорчено',
+  'stat.excess': 'Превышение',
+  'stat.comment': 'Комментарий',
 
   // ── Admin ──
   'admin.settings': 'Параметры',
