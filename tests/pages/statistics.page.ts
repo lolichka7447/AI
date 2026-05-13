@@ -205,6 +205,79 @@ export class StatisticsPage extends BasePage {
     return names;
   }
 
+  // --- Employee Reports page helpers ---
+
+  /** Get all employee names from the data table */
+  async getEmployeeNames(): Promise<string[]> {
+    const rows = this.dataRows;
+    const count = await rows.count();
+    const names: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const firstCell = rows.nth(i).locator('td').first();
+      const text = await firstCell.textContent();
+      if (text) names.push(text.trim());
+    }
+    return names;
+  }
+
+  /** Get norm value for a specific employee row */
+  async getNormForEmployee(name: string): Promise<string> {
+    const row = this.getRowByName(name);
+    // Norm is typically the 3rd or 4th column in employee reports
+    const cells = row.locator('td');
+    const count = await cells.count();
+    // Find cell in the norm column — look for numeric value
+    for (let i = 0; i < count; i++) {
+      const text = (await cells.nth(i).textContent())?.trim() || '';
+      if (/^\d+(\.\d+)?$/.test(text) && i >= 2) return text;
+    }
+    return '';
+  }
+
+  /** Get all header names from the currently visible table */
+  async getVisibleHeaders(): Promise<string[]> {
+    const headers = this.page.locator('th:visible');
+    const count = await headers.count();
+    const names: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const text = await headers.nth(i).textContent();
+      if (text) names.push(text.trim());
+    }
+    return names;
+  }
+
+  /** Check if employee search/filter is available */
+  async searchEmployee(name: string) {
+    const searchInput = this.page.locator('input[placeholder*="поиск" i], input[placeholder*="search" i], input[placeholder*="найти" i]').first();
+    if (await searchInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await searchInput.fill(name);
+      await this.page.waitForTimeout(500);
+      await this.page.waitForLoadState('networkidle').catch(() => {});
+    }
+  }
+
+  /** Check if pagination controls are visible */
+  async isPaginationVisible(): Promise<boolean> {
+    const pagination = this.page.locator('.rc-pagination, [class*="pagination"], nav[aria-label*="pagination"]').first();
+    return pagination.isVisible({ timeout: 3000 }).catch(() => false);
+  }
+
+  /** Get current page number from pagination */
+  async getCurrentPageNumber(): Promise<number> {
+    const active = this.page.locator('.rc-pagination-item-active, [class*="pagination"] [aria-current="page"]').first();
+    const text = await active.textContent().catch(() => '1');
+    return parseInt(text || '1', 10);
+  }
+
+  /** Click next page in pagination */
+  async goToNextPage() {
+    const nextBtn = this.page.locator('.rc-pagination-next, [class*="pagination"] button[aria-label*="next" i]').first();
+    if (await nextBtn.isEnabled()) {
+      await nextBtn.click();
+      await this.page.waitForLoadState('networkidle').catch(() => {});
+    }
+  }
+
   // --- Active tab ---
 
   async getActiveTabText(): Promise<string> {
