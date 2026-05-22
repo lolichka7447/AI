@@ -134,6 +134,16 @@ export const en: Record<string, string> = {
   'tab.reports': 'Reports',
   'tab.tickets': 'Tickets',
 
+  // Statistics tabs (rc-tabs on /statistics/general)
+  'tab.stat.myTasks': 'My tasks',
+  'tab.stat.myProjects': 'My projects',
+  'tab.stat.projectEmployees': 'Employees of my projects',
+  'tab.stat.deptProjects': 'Department projects',
+  'tab.stat.deptEmployees': 'Department employees',
+  'tab.stat.officeProjects': 'Office projects',
+  'tab.stat.officeEmployees': 'Office employees',
+  'tab.stat.tasksByEmployee': '@ Tasks by employee',
+
   // ── Labels / Table headers ──
   'label.total': 'Total',
   'label.totalAlt': 'Total',
@@ -291,6 +301,16 @@ export const en: Record<string, string> = {
   'vacation.rejectReason': 'Rejection reason',
   'vacation.overlap': 'overlap',
   'vacation.conversion': 'conver',
+
+  // ── Statistics / Employee Reports ──
+  'stat.norm': 'Norm',
+  'stat.normTooltipCurrent': "Employee's adjusted norm without deducting days of unpaid vacations is in brackets. It shows how many hours can be worked beyond the personal adjusted norm without exceeding the budget",
+  'stat.normTooltipExpected': "Employee's adjusted norm without deducting days of unpaid vacations and caring for a family member sick leaves is in brackets. It shows how many hours can be worked beyond the personal adjusted norm without exceeding the budget",
+  'stat.employee': 'Employee',
+  'stat.manager': 'Manager',
+  'stat.reported': 'Reported',
+  'stat.excess': 'Excess',
+  'stat.comment': 'Comment',
 
   // ── Admin ──
   'admin.settings': 'Parameters',
