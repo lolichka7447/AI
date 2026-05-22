@@ -232,6 +232,21 @@ export const ru: Record<string, string> = {
   'msg.error': 'ошибка',
   'msg.commentText': 'комментарий',
 
+  // ── Planner ──
+  'planner.title': 'Планировщик',
+  'planner.openForEditing': 'Открыть для редактирования',
+  'planner.addTask': 'Добавить задачу',
+  'planner.searchPlaceholder': 'Мой проект',
+  'planner.selectProject': 'Выберите проект',
+  'planner.showProjectsWhereI': 'Показать проекты, где я',
+  'planner.member': 'Участник',
+  'planner.remainingHours': 'Осталось часов',
+  'planner.info': 'Инфо',
+  'planner.tracker': 'Трекер',
+  'planner.taskTicket': 'Задача',
+  'planner.copyTable': 'Копировать таблицу',
+  'planner.number': '№',
+
   // ── Filters / Sorting ──
   'filter.department': 'Отдел',
   'filter.status': 'Статус',

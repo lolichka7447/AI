@@ -9,25 +9,26 @@ const TARGET_LOCALE = getLocale(); // 'ru' | 'en'
 
 setup('authenticate via CAS', async ({ page }) => {
   setup.setTimeout(120000);
-  await page.goto(BASE_URL, { timeout: 60000, waitUntil: 'networkidle' });
+  await page.goto(BASE_URL, { timeout: 60000, waitUntil: 'domcontentloaded' });
+  await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
 
   // TTT login page — enter username and click LOGIN
-  const loginInput = page.locator('#username, .login-page input').first();
-  if (await loginInput.isVisible({ timeout: 10000 })) {
-    await loginInput.fill(process.env.TEST_USER_LOGIN || 'pvaynmaster');
+  const loginInput = page.locator('#username').first();
+  await loginInput.waitFor({ state: 'visible', timeout: 15000 });
+  await loginInput.click();
+  await loginInput.fill(process.env.TEST_USER_LOGIN || 'pvaynmaster');
 
-    // Password field may or may not exist
-    const passwordField = page.locator('#password');
-    if (await passwordField.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await passwordField.fill(process.env.TEST_USER_PASSWORD || 'pvaynmaster');
-    }
-
-    await page.locator('button:has-text("LOGIN"), button[type="submit"]').first().click();
-
-    // Wait for CAS redirect chain to complete
-    await page.waitForTimeout(5000);
-    await page.waitForLoadState('networkidle', { timeout: 30000 });
+  // Password field may or may not exist
+  const passwordField = page.locator('#password');
+  if (await passwordField.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await passwordField.fill(process.env.TEST_USER_PASSWORD || 'pvaynmaster');
   }
+
+  await page.getByRole('button', { name: 'LOGIN' }).click();
+
+  // Wait for redirect chain to complete — either app loads or CAS page appears
+  await page.waitForTimeout(3000);
+  await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
 
   // If on CAS page, authenticate there too
   if (page.url().includes('cas')) {
@@ -35,11 +36,11 @@ setup('authenticate via CAS', async ({ page }) => {
     await page.locator('#password').fill(process.env.TEST_USER_PASSWORD || 'pvaynmaster');
     await page.locator('button[type="submit"], input[type="submit"]').first().click();
     await page.waitForTimeout(5000);
-    await page.waitForLoadState('networkidle', { timeout: 30000 });
+    await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
   }
 
-  // Verify the app loaded
-  await page.locator('nav, .navbar, .page-header').first().waitFor({ state: 'visible', timeout: 15000 });
+  // Verify the app loaded — use role-based selector matching real DOM
+  await page.locator('nav, navigation, .navbar, [role="navigation"]').first().waitFor({ state: 'visible', timeout: 20000 });
 
   // Switch language to match LOCALE env var
   const targetLang = TARGET_LOCALE.toUpperCase(); // 'RU' or 'EN'
