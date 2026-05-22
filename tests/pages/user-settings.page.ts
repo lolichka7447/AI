@@ -59,16 +59,18 @@ export class UserSettingsPage extends BasePage {
     this.trackersTab = page.getByRole('button', { name: new RegExp(t('tab.trackers'), 'i') }).first();
     this.exportTab = page.getByRole('button', { name: new RegExp(t('tab.export'), 'i') }).first();
 
-    // General — page content area after the header
-    this.profileSection = page.locator('.page-body, .page-body__tabs, main').first();
+    // General — content area contains user name header + tabs + token/settings
+    // DOM: generic > generic "Павел Вайнмастер (pvaynmaster)" + generic (tabs+content)
+    this.profileSection = page.locator('button:has-text("Общие"), button:has-text("General")').first().locator('..').locator('..');
     this.nameInput = page.getByRole('spinbutton').first();
     this.emailInput = page.locator('input[name*="email"], input[type="email"]').first();
-    this.languageSelect = page.locator('.language-switcher, select[name*="lang"]').first();
-    this.saveProfileButton = page.getByRole('button', { name: /Сохранить настройки|Сохранить/i }).first();
+    // Language switcher is in the header bar (not in settings form)
+    this.languageSelect = page.locator('.language-switcher').first();
+    this.saveProfileButton = page.getByRole('button', { name: /Сохранить настройки|Save settings/i }).first();
 
-    // Token — "Ваш секретный API Token" section uses <dt>/<dd> (term/definition)
-    this.tokenSection = page.locator('dt, text=/секретн|token|токен/i').first();
-    this.currentToken = page.locator('dd').first();
+    // Token — "Ваш секретный API Token" uses <dt> (term) / <dd> (definition)
+    this.tokenSection = page.getByRole('term').first();
+    this.currentToken = page.getByRole('definition').first();
     this.generateTokenButton = this.currentToken.locator('button').first();
     this.copyTokenButton = this.currentToken.locator('button').first();
     this.revokeTokenButton = this.currentToken.locator('button').nth(1);

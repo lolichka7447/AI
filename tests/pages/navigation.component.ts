@@ -212,18 +212,8 @@ export class NavigationComponent {
   }
 
   async navigateToAccount() {
-    // Account link is directly in navbar: a[href="/admin/account"]
-    const accountLink = this.page.locator('a[href="/admin/account"]').first();
-    if (await accountLink.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await accountLink.click();
-    } else {
-      // Fallback: try user menu dropdown
-      await this.openUserMenu();
-      await this.page.waitForTimeout(300);
-      const accountItem = this.page.locator('a[href*="account"], .navbar__list-drop a')
-        .filter({ hasText: new RegExp(t('nav.account') + '|' + t('nav.accountAlt'), 'i') }).first();
-      await accountItem.click();
-    }
+    // Direct navigation is most reliable for /admin/account
+    await this.page.goto('/admin/account');
     await this.page.waitForLoadState('networkidle').catch(() => {});
   }
 

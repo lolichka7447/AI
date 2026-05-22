@@ -16,3 +16,22 @@ dist/
 /playwright/.auth/
 .auth/
 /.playwright-cli/
+auth-state.json
+
+# Debug & temp files
+_debug-*
+debug-*
+ttt-main-page.png
+nul
+process-qase-data.js
+_figma_structure.txt
+
+# Target project (cloned repo for analysis)
+_target-project/
+
+# QA reports in repo root (moved to Obsidian)
+_qa-report-*.md
+
+# IDE
+.idea/
+.vscode/
