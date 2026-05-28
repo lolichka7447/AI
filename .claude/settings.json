@@ -1,0 +1,44 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(git merge:*)",
+
+      "Bash(node:*)",
+      "Bash(node -e:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+
+      "Bash(npx playwright:*)",
+      "Skill(playwright-cli)",
+
+      "Bash(curl:*)",
+      "Bash(gh:*)",
+
+      "Bash(ls:*)",
+      "Bash(dir:*)",
+      "Bash(find:*)",
+      "Bash(findstr:*)",
+      "Bash(more:*)",
+      "Bash(du:*)",
+      "Bash(wc:*)",
+
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(python -c:*)",
+      "Bash(pip install:*)",
+
+      "Bash(powershell -Command:*)"
+    ],
+    "deny": []
+  }
+}
